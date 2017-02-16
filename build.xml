@@ -1,0 +1,73 @@
+<?xml version="1.0" ?>
+<project name="Uter: ingest system" default="deploy-war">
+	<property name="project" value="uter"/>
+	<property name="src.dir" value="src"/>
+	<property name="build.dir" value="build"/>
+	<property name="dist.dir" value="dist"/>
+	<property name="doc.dir" value="doc"/>
+	<property name="lib.dir" value="WebContent/WEB-INF/lib"/>
+    <property name="classes.dir" value="target"/>
+	<property name="web.dir" value="WebContent"/>
+	<property name="war.dir" value="war"/>
+
+	<!-- create the classpath -->
+	<path id="classpath">
+		<fileset dir="${lib.dir}" includes="*.jar"/>
+	</path>
+
+	<target name="init">
+		<mkdir dir="${build.dir}" />
+		<mkdir dir="${dist.dir}" />
+		<mkdir dir="${classes.dir}" />
+		<mkdir dir="${war.dir}" />
+	</target>
+
+	<target name="clean">
+		<delete dir="${build.dir}"/>
+		<delete dir="${dist.dir}"/>
+		<delete dir="${classes.dir}" />
+		<delete dir="${war.dir}"/>
+	</target>
+
+	<target name="compile" depends="init">
+	  <javac srcdir="${src.dir}" destdir="${classes.dir}" debug="on">
+	    <classpath>
+	        <path refid="classpath"/>
+	    </classpath>
+	  </javac>
+	</target>
+
+	<target name="javadoc" depends="init">
+	  <javadoc packagenames="*" sourcepath="${src.dir}" destdir="${doc.dir}/api"
+	  	author="true"
+        version="true"
+        use="true"
+	  	>
+	    <classpath>
+	        <path refid="classpath"/>
+	    </classpath>
+	  </javadoc>
+	</target>
+
+	<target name="build" depends="clean,compile">
+		<delete file="${build.dir}/${project}.jar"/>
+		<jar jarfile="${build.dir}/${project}.jar" basedir="${classes.dir}"></jar>
+	</target>
+
+
+	<target name="deploy-war" depends="clean, build">
+		<copy todir="${web.dir}/WEB-INF/lib/">
+			<fileset dir="${build.dir}">
+				<include name="${project}.jar"/>
+			</fileset>
+			<fileset dir="${lib.dir}" includes="**/*.jar">
+				<exclude name="jsp-api.jar"/>
+				<exclude name="servlet.jar"/>
+			</fileset>
+		</copy>
+		<war destfile="${war.dir}/${project}.war" webxml="${web.dir}/WEB-INF/web.xml">
+			<fileset dir="${web.dir}"/>
+		</war>
+	</target>
+
+</project>

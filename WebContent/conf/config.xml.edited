@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+	<comment>Config file for Edna</comment>
+<<<<<<< .mine
+	<entry key="image-path">/springfield/tomcat/webapps/ROOT/images</entry>
+	<entry key="out-image-path">/springfield/tomcat/webapps/ROOT/outimages</entry>
+=======
+	<entry key="image-path">/springfield/tomcat/webapps/ROOT/images</entry>
+>>>>>>> .r82
+</properties>

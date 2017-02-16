@@ -1,0 +1,45 @@
+<h1>Image Server (Edna) User Guide</h1>
+</p>
+
+<b>1. To scale an Image</b> </br>
+&nbsp; Method: scale {Integer width}x{Integer height} </br>
+&nbsp; Parameters: </br>
+&nbsp; &nbsp; &nbsp;	width: Integer value to set width of the image to be scaled </br>
+&nbsp; &nbsp; &nbsp;	height: Integer value to set height of the image to be scaled </br>
+&nbsp; &nbsp; &nbsp; 	Example: http://.....\image.jpg?scale=100x100
+</p>
+<b>2. To rotate an Image</b></br>
+&nbsp; Method: rotate {Integer angle-in-degrees}</br>
+&nbsp; Parameter: </br>
+&nbsp; &nbsp; &nbsp; angle: Integer value of angle in radian for rotating an image. The value should not exceed 360 degrees. </br>
+&nbsp; &nbsp; &nbsp; 	Example: http://.....\image.jpg?rotate=30
+</p>
+<b>3. To make an Image transparent</b> </br>
+&nbsp; Method: transparent {Float value}</br>
+&nbsp; Parameter: </br>
+&nbsp; &nbsp; &nbsp; value: Float value for making image transparent/translucent. The value range from 0 to 1. </br>
+&nbsp; &nbsp; &nbsp; 	Example: http://.....\image?transparent=0.4
+</p>
+<b>4. To crop an Image</b></br>
+&nbsp; Method: crop {Integer x-coordinate}x{Integer y-coordinate}x{Integer width}x{Integer height}</br>
+&nbsp; Parameters: </br>
+&nbsp; &nbsp; &nbsp;	x-coordinate: Integer value that gives the x-coordinate of the image to be cropped </br>
+&nbsp; &nbsp; &nbsp;	y-coordinate: Integer value that gives the x-coordinate of the image to be cropped</br>
+&nbsp; &nbsp; &nbsp;	width: Integer value to set width of the image to be cropped</br>
+&nbsp; &nbsp; &nbsp;	height: Integer value to set height of the image to be cropped </br>
+&nbsp; &nbsp; &nbsp; 	Example: http://.....\image.jpg?crop=30x60x300x300
+</p>
+<b>5. To compress an Image</b></br>
+
+&nbsp; Method: compress {Float compression-Quality} </br>
+&nbsp; Parameter: </br>
+&nbsp; &nbsp; &nbsp; angle: Float value for compressing an image. The value range from 0 to 1. </br>
+&nbsp; &nbsp; &nbsp; 	Example: http://.....\image.jpg?compress=0.4
+</p>
+<b>1. To adjust the layout of an Image</b> </br>
+&nbsp; Method: adjust {Integer width}x{Integer height} </br>
+&nbsp; Parameters: </br>
+&nbsp; &nbsp; &nbsp;	width: Integer value to set width of the image to be scaled </br>
+&nbsp; &nbsp; &nbsp;	height: Integer value to set height of the image to be scaled </br>
+&nbsp; &nbsp; &nbsp; 	Example: http://.....\image?adjust=100x100
+</p>
