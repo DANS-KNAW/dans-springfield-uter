@@ -256,7 +256,10 @@ public class Video {
                 	 LOG.debug("Converting subtitles to VTT ");
                          File dest = new File(folderPath + "/" + FilenameUtils.getBaseName(subtitles.getName())+".vtt");
                          try {
-                             Srt2Vtt(subtitles, dest);   
+                             Srt2Vtt(subtitles, dest);
+                             uri = this.refertarget;
+                             response = LazyHomer.sendRequest("PUT", referid+"/properties/webvtt", FilenameUtils.getBaseName(subtitles.getName())+".vtt", "text/xml");
+                             LOG.info("Adding webtvtt: "+response);
                          }
                          catch (IOException e) {
                              LOG.error("Could not convert subtitles from " + subtitles.getAbsolutePath() + " to " + dest.getAbsolutePath());
