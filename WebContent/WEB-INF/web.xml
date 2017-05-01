@@ -24,16 +24,6 @@
 	</servlet-mapping>
 	
 	<servlet>
-	    <servlet-name>MargeServlet</servlet-name>
-	    <servlet-class>com.noterik.bart.marge.server.MargeServlet</servlet-class>
-	    <load-on-startup>1</load-on-startup>
-	</servlet>   
-	<servlet-mapping>
-	    <servlet-name>MargeServlet</servlet-name>
-	    <url-pattern>/marge/*</url-pattern>
-	</servlet-mapping> 
-	
-	<servlet>
 	    <servlet-name>UterServlet</servlet-name>
 	    <servlet-class>org.springfield.uter.servlet.UterServlet</servlet-class>
 	    <load-on-startup>1</load-on-startup>
