@@ -134,6 +134,14 @@ public class VideoPlaylist {
                 LOG.error("Video not valid");
                 this.valid = false;
                 return;
+            } else if (child.getName().equals("audio")) {
+        	Audio audio = new Audio(child, this.target, this.method);
+                audio.setRequireTicket(this.requireTicket);
+                audio.validate();
+                if (audio.isValid()) continue;
+                LOG.error("Audio not valid");
+                this.valid = false;
+                return;
             }
             LOG.error("Found child " + child.getName() + " in video playlist node, this is not allowed");
             this.valid = false;
@@ -171,11 +179,19 @@ public class VideoPlaylist {
             LazyHomer.sendRequest("PUT", uri, fsxml, "text/xml");
             List<Node> childs = this.videoplaylist.selectNodes("*");
             for (Node child : childs) {
-                if (!child.getName().equals("video")) continue;
-                Video video = new Video(child, this.target, this.method);
-                video.setRequireTicket(this.requireTicket);
-                video.validate();
-                video.process();
+        	if (child.getName().equals("video")) {
+        	    Video video = new Video(child, this.target, this.method);
+                    video.setRequireTicket(this.requireTicket);
+                    video.validate();
+                    video.process();
+        	} else if (child.getName().equals("audio")) {
+        	    Audio audio = new Audio(child, this.target, this.method);
+                    audio.setRequireTicket(this.requireTicket);
+                    audio.validate();
+                    audio.process();
+        	} else {
+        	    continue;
+        	}   
             }
         }
         if (this.method.equals("delete")) {

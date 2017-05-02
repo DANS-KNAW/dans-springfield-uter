@@ -52,6 +52,10 @@ public class UriParser {
     public static String getVideoIdFromUri(String uri) {
         return UriParser.getTypeIdFromUri(uri, "video");
     }
+    
+    public static String getAudioIdFromUri(String uri) {
+        return UriParser.getTypeIdFromUri(uri, "audio");
+    }
 
     public static String getParentUri(String uri) {
         String parentUri = "";
