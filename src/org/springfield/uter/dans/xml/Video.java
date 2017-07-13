@@ -26,8 +26,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Reader;
-import java.io.Writer;
+import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -39,6 +38,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Node;
 import org.springfield.uter.dans.xml.ActionFS;
 import org.springfield.uter.dans.xml.UriParser;
+import org.springfield.uter.dans.xml.VideoPlaylist.PlayoutMode;
 import org.springfield.uter.homer.LazyHomer;
 import org.springfield.uter.homer.MountProperties;
 
@@ -52,18 +52,23 @@ public class Video {
     private String uri;
     private String src;
     private String videoTarget;
-    private String subtitles;
+    private String subtitle;
     private boolean requireTicket = true;
     private int starttime;
     private int duration = -1;
+    private PlayoutMode playMode;
+    private String title;
+    private Subtitle[] subtitles;
     
     enum State { Number, TimeStamp, Text };
+    enum SubtitleType { SRT, WEBVTT };
 
-    public Video(Node video, String target, String method) {
+    public Video(Node video, String target, String method, PlayoutMode playMode) {
         LOG.setLevel(Level.DEBUG);
         this.video = video;
         this.target = target;
         this.method = method;
+        this.playMode = playMode;
     }
 
     public void validate() {
@@ -90,8 +95,35 @@ public class Video {
         this.videoTarget = this.video.selectSingleNode("@target") == null ? null : this.video.selectSingleNode("@target").getText();
         this.starttime = this.video.selectSingleNode("@start-time") == null ? 0 : Integer.parseInt(this.video.selectSingleNode("@start-time").getText());
         int endtime = this.video.selectSingleNode("@end-time") == null ? -1 : Integer.parseInt(this.video.selectSingleNode("@end-time").getText());
-        this.subtitles = this.video.selectSingleNode("@subtitles") == null ? this.subtitles : this.video.selectSingleNode("@subtitles").getText();
-
+        this.subtitle = this.video.selectSingleNode("@subtitles") == null ? this.subtitle : this.video.selectSingleNode("@subtitles").getText();
+        this.title = this.video.selectSingleNode("@title") == null ? null : this.video.selectSingleNode("@title").getText();
+        
+        List<Node> childs = this.video.selectNodes("*");
+        this.subtitles = new Subtitle[childs.size()];
+        int i = 0;
+         
+        for (Node child : childs) {
+            String language = child.selectSingleNode("@xml:lang") == null ? null : child.selectSingleNode("@xml:lang").getText();
+            String src =  child.selectSingleNode("@src") == null ? null : child.selectSingleNode("@src").getText();
+            
+            if (language == null || src == null) {
+        	LOG.error("Subtitle node found without required language or source");
+        	this.valid = false;
+        	return;
+            }
+            
+            File subtitles = new File("/springfield/inbox/"+src);
+            if (!subtitles.exists()) {
+        	LOG.info("Source for subtitle does not yet exist - "+src);
+                this.valid = false;
+                return;
+            }
+            
+            Subtitle sub = new Subtitle(language, src);
+            this.subtitles[i] = sub;
+            i++;
+        }
+        
         if (this.src == null) {
             LOG.error("No src defined for video");
             this.valid = false;
@@ -104,10 +136,10 @@ public class Video {
             return;
         }
         
-        if (this.subtitles != null) {
-            File subtitles = new File("/springfield/inbox/"+this.subtitles);
+        if (this.subtitle != null) {
+            File subtitles = new File("/springfield/inbox/"+this.subtitle);
             if (!subtitles.exists()) {
-        	LOG.info("Source for subtitle does not yet exist - "+this.subtitles);
+        	LOG.info("Source for subtitle does not yet exist - "+this.subtitle);
                 this.valid = false;
                 return;
             }
@@ -118,9 +150,19 @@ public class Video {
             this.valid = false;
             return;
         }
+        
+        if (this.playMode == PlayoutMode.menu) {
+            if (title == null || title.length() <= 0) {
+        	LOG.error("Title mandatory for video in playlist mode menu");
+        	this.valid = false;
+                return;
+            }
+        }
+        
         if (endtime != -1) {
             this.duration = endtime - this.starttime;
         }
+        
         this.target = "/domain/" + domain + "/user/" + user + "/presentation/" + presentation + "/videoplaylist/1/video/" + this.videoTarget;
         this.refertarget = "/domain/" + domain + "/user/" + user + "/video";
         if (this.method.equals("add")) {
@@ -186,7 +228,7 @@ public class Video {
     }
 
     public void setSubtitles(String subtitles) {
-        this.subtitles = subtitles;
+        this.subtitle = subtitles;
     }
 
     public boolean isValid() {
@@ -194,17 +236,51 @@ public class Video {
     }
 
     public void process() {
-        if (this.method.equals("add")) {
+	if (this.method.equals("add")) {
             MountProperties mp = LazyHomer.getMountProperties("dans");
             String path = mp.getPath();
             String extension = this.src.substring(this.src.lastIndexOf(".") + 1);
             String fsxml = "<fsxml><properties><private>"+String.valueOf(this.requireTicket)+"</private>";
+            SubtitleType sType = SubtitleType.SRT;            
             
-            if (this.subtitles != null) {        	
-            	 File subs = new File("/springfield/inbox/" + this.subtitles);
+            if (this.subtitle != null) {        	
+        	File subs = new File("/springfield/inbox/" + this.subtitle);
+            	 
+            	String fileExtension = FilenameUtils.getExtension(subs.getName());
+            	 
+            	if (fileExtension.toLowerCase().equals("srt")) {
+            	    sType = SubtitleType.SRT;
+            	} else if (fileExtension.toLowerCase().equals("vtt")) {
+            	    sType = SubtitleType.WEBVTT;
+            	}      	    
+            	 
             	 if (subs.exists()) {
-            	     fsxml += "<srt>"+subs.getName()+"</srt>";
+            	     if (sType == SubtitleType.SRT) {
+            		 fsxml += "<srt>"+subs.getName()+"</srt>";
+            	     } else if (sType == SubtitleType.WEBVTT) {
+            		 fsxml += "<webvtt>"+subs.getName()+"</webvtt>";
+            	     }
             	 }
+            } else if (this.subtitles.length > 0) {
+		for (Subtitle sub : this.subtitles) {
+		    File subs = new File("/springfield/inbox/" + sub.getPath());
+
+		    String fileExtension = FilenameUtils.getExtension(subs.getName());
+
+		    if (fileExtension.toLowerCase().equals("srt")) {
+			sType = SubtitleType.SRT;
+		    } else if (fileExtension.toLowerCase().equals("vtt")) {
+			sType = SubtitleType.WEBVTT;
+		    }
+
+		    if (subs.exists()) {
+			if (sType == SubtitleType.SRT) {
+			    fsxml += "<srt_"+sub.getLanguage()+">" + sub.getLanguage() +"_"+ subs.getName() + "</srt_"+sub.getLanguage()+">";
+			} else if (sType == SubtitleType.WEBVTT) {
+			    fsxml += "<webvtt_"+sub.getLanguage()+">"+ sub.getLanguage() +"_" + subs.getName() + "</webvtt_"+sub.getLanguage()+">";
+			}
+		    }
+		}
             }
             
             fsxml += "</properties></fsxml>";
@@ -221,7 +297,7 @@ public class Video {
             }
             File source = new File("/springfield/inbox/" + this.src);
             if (source.exists()) {
-                LOG.debug("source file exists :-)");
+                LOG.debug("source file exists");
                 String checkDir = path + referid + "/rawvideo/1";
                 File folderPath = new File(checkDir);
                 LOG.debug("About to move file to " + folderPath.getAbsolutePath());
@@ -245,40 +321,46 @@ public class Video {
                 LOG.error("Source file does not exist: " + source.getAbsolutePath());
             }
             
-            if (this.subtitles != null) {
-        	 File subtitles = new File("/springfield/inbox/" + this.subtitles);
+            if (this.subtitle != null) {
+        	 File subtitles = new File("/springfield/inbox/" + this.subtitle);
                  if (subtitles.exists()) {
-                     LOG.debug("subtitles file exists :-)");
+                     LOG.debug("subtitle file exists");
                      String checkDir = path + referid;
                      File folderPath = new File(checkDir);
                      LOG.debug("About to move file to " + folderPath.getAbsolutePath());
-                     if (folderPath.exists() || folderPath.mkdirs()) {
-                	 LOG.debug("Converting subtitles to VTT ");
+                     if (folderPath.exists() || folderPath.mkdirs()) {	                	 
                          File dest = new File(folderPath + "/" + FilenameUtils.getBaseName(subtitles.getName())+".vtt");
-                         try {
-                             Srt2Vtt(subtitles, dest);
-                             uri = this.refertarget;
-                             response = LazyHomer.sendRequest("PUT", referid+"/properties/webvtt", FilenameUtils.getBaseName(subtitles.getName())+".vtt", "text/xml");
-                             LOG.info("Adding webtvtt: "+response);
-                         }
-                         catch (IOException e) {
-                             LOG.error("Could not convert subtitles from " + subtitles.getAbsolutePath() + " to " + dest.getAbsolutePath());
-                             LOG.error(e.toString());
+                         
+                         if (sType == SubtitleType.SRT) {
+                             LOG.debug("Converting subtitle to VTT ");
+                             
+                             try {
+                                 Srt2Vtt(subtitles, dest);
+                                 uri = this.refertarget;
+                                 response = LazyHomer.sendRequest("PUT", referid+"/properties/webvtt", FilenameUtils.getBaseName(subtitles.getName())+".vtt", "text/xml");
+                                 LOG.info("Adding webtvtt: "+response);
+                             }
+                             catch (IOException e) {
+                                 LOG.error("Could not convert subtitle from " + subtitles.getAbsolutePath() + " to " + dest.getAbsolutePath());
+                                 LOG.error(e.toString());
+                             }
                          }
                          
-                         LOG.debug("moving subtitles to " + folderPath.getAbsolutePath() + "/"+ subtitles.getName());
+                         LOG.debug("moving subtitle to " + folderPath.getAbsolutePath() + "/"+ subtitles.getName());
                          File dest1 = new File(folderPath + "/" + subtitles.getName());
                          try {
                             FileUtils.moveFile(subtitles, dest1);
                          }
                          catch (IOException e) {
-                             LOG.error("Could not move subtitles from " + subtitles.getAbsolutePath() + " to " + dest1.getAbsolutePath());
+                             LOG.error("Could not move subtitle from " + subtitles.getAbsolutePath() + " to " + dest1.getAbsolutePath());
                              LOG.error(e.toString());
                          }
                          
                          if (dest.exists() && dest1.exists()) {
-                             LOG.info("Sucessfully converted subtitles to vtt "+dest.getAbsolutePath());
-                             LOG.info("Successfully moved subtitles to " + dest1.getAbsolutePath());
+                             if (sType == SubtitleType.SRT) {
+                        	 LOG.info("Sucessfully converted subtitle to vtt "+dest.getAbsolutePath());
+                             }
+                             LOG.info("Successfully moved subtitle to " + dest1.getAbsolutePath());
                          } else {
                              LOG.error("Failed video processing");
                          }
@@ -286,7 +368,61 @@ public class Video {
                  }  else {
                      LOG.error("Subtitles file does not exist: " + subtitles.getAbsolutePath());
                  }
-            }            
+            } else if (this.subtitles.length > 0) {
+        	for (Subtitle sub : this.subtitles) {
+        	    File subtitles = new File("/springfield/inbox/" + sub.getPath());
+                    if (subtitles.exists()) {
+                        LOG.debug("subtitle file exists");
+                        String checkDir = path + referid;
+                        File folderPath = new File(checkDir);
+                        LOG.debug("About to move file to " + folderPath.getAbsolutePath());
+                        if (folderPath.exists() || folderPath.mkdirs()) {	                	 
+                            File dest = new File(folderPath + "/" + sub.getLanguage() +"_"+ FilenameUtils.getBaseName(subtitles.getName())+".vtt");
+                            
+                            if (sType == SubtitleType.SRT) {
+                                LOG.debug("Converting subtitle to VTT ");
+                                
+                                try {
+                                    Srt2Vtt(subtitles, dest);
+                                    uri = this.refertarget;
+                                    response = LazyHomer.sendRequest("PUT", referid+"/properties/webvtt_"+sub.getLanguage(), sub.getLanguage() +"_"+ FilenameUtils.getBaseName(subtitles.getName())+".vtt", "text/xml");
+                                    LOG.info("Adding webtvtt: "+response);
+                                }
+                                catch (IOException e) {
+                                    LOG.error("Could not convert subtitle from " + subtitles.getAbsolutePath() + " to " + dest.getAbsolutePath());
+                                    LOG.error(e.toString());
+                                }
+                            }
+                            
+                            LOG.debug("moving subtitle to " + folderPath.getAbsolutePath() +"/"+ sub.getLanguage() +"_"+ subtitles.getName());
+                            File dest1 = new File(folderPath + "/"+ sub.getLanguage() +"_"+ subtitles.getName());
+                            try {
+                               FileUtils.moveFile(subtitles, dest1);
+                            }
+                            catch (IOException e) {
+                                LOG.error("Could not move subtitle from " + subtitles.getAbsolutePath() + " to " + dest1.getAbsolutePath());
+                                LOG.error(e.toString());
+                            }
+                            
+                            if (dest.exists() && dest1.exists()) {
+                                if (sType == SubtitleType.SRT) {
+                           	 LOG.info("Sucessfully converted subtitle to vtt "+dest.getAbsolutePath());
+                                }
+                                LOG.info("Successfully moved subtitle to " + dest1.getAbsolutePath());
+                            } else {
+                                LOG.error("Failed video processing");
+                            }
+                        }
+                    }  else {
+                        LOG.error("Subtitles file does not exist: " + subtitles.getAbsolutePath());
+                    }
+        	}
+            }
+            
+            if (this.playMode == PlayoutMode.menu) {
+        	response = LazyHomer.sendRequest("PUT", referid+"/properties/title", this.title, "text/xml");
+                LOG.info("Adding title to video: "+response);
+            }
             
             fsxml = "<fsxml><properties><original>true</original><format>unknown</format><extension>" + extension + "</extension>" + 
             		"<mount>dans</mount>" + 

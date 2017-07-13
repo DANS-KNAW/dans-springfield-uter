@@ -30,6 +30,7 @@ import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Node;
+import org.springfield.uter.dans.xml.VideoPlaylist.PlayoutMode;
 import org.springfield.uter.homer.LazyHomer;
 import org.springfield.uter.homer.MountProperties;
 
@@ -54,12 +55,15 @@ public class Audio {
     private boolean requireTicket = true;
     private int starttime;
     private int duration = -1;
+    private PlayoutMode playMode;
+    private String title;
     
-    public Audio(Node audio, String target, String method) {
+    public Audio(Node audio, String target, String method, PlayoutMode playMode) {
         LOG.setLevel(Level.DEBUG);
         this.audio = audio;
         this.target = target;
         this.method = method;
+        this.playMode = playMode;
     }
 
     public void validate() {
@@ -86,7 +90,8 @@ public class Audio {
         this.audioTarget = this.audio.selectSingleNode("@target") == null ? null : this.audio.selectSingleNode("@target").getText();
         this.starttime = this.audio.selectSingleNode("@start-time") == null ? 0 : Integer.parseInt(this.audio.selectSingleNode("@start-time").getText());
         int endtime = this.audio.selectSingleNode("@end-time") == null ? -1 : Integer.parseInt(this.audio.selectSingleNode("@end-time").getText());
-
+        this.title = this.audio.selectSingleNode("@title") == null ? null : this.audio.selectSingleNode("@title").getText();
+        
         if (this.src == null) {
             LOG.error("No src defined for audio");
             this.valid = false;
@@ -104,9 +109,19 @@ public class Audio {
             this.valid = false;
             return;
         }
+        
+        if (this.playMode == PlayoutMode.menu) {
+            if (title == null || title.length() <= 0) {
+        	LOG.error("Title mandatory for audio in playlist mode menu");
+        	this.valid = false;
+                return;
+            }
+        }
+        
         if (endtime != -1) {
             this.duration = endtime - this.starttime;
         }
+        
         this.target = "/domain/" + domain + "/user/" + user + "/presentation/" + presentation + "/videoplaylist/1/audio/" + this.audioTarget;
         this.refertarget = "/domain/" + domain + "/user/" + user + "/audio";
         if (this.method.equals("add")) {
@@ -219,6 +234,11 @@ public class Audio {
             } else {
                 LOG.error("Source file does not exist: " + source.getAbsolutePath());
             }           
+            
+            if (this.playMode == PlayoutMode.menu) {
+        	response = LazyHomer.sendRequest("PUT", referid+"/properties/title", this.title, "text/xml");
+                LOG.info("Adding title to audio: "+response);
+            }
             
             fsxml = "<fsxml><properties><original>true</original><format>unknown</format><extension>" + extension + "</extension>" + 
             		"<mount>dans</mount>" + 

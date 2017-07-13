@@ -35,12 +35,15 @@ import org.springfield.uter.homer.LazyHomer;
 
 public class VideoPlaylist {
     private static Logger LOG = Logger.getLogger(VideoPlaylist.class);
+    
+    enum PlayoutMode {continuous, menu};
+    
     private Node videoplaylist;
     private String target;
     private String method;
     private boolean valid = false;
-    private String subtitles = null;
     private boolean requireTicket = true;
+    private PlayoutMode playMode = PlayoutMode.continuous;
 
     public VideoPlaylist(Node videoplaylist, String target, String method) {
         LOG.setLevel(Level.DEBUG);
@@ -75,8 +78,13 @@ public class VideoPlaylist {
             this.valid = false;
             return;
         }
-        this.subtitles = this.videoplaylist.selectSingleNode("@subtitles") == null ? null : this.videoplaylist.selectSingleNode("@subtitles").getText();
+       
         this.requireTicket = this.videoplaylist.selectSingleNode("@require-ticket") == null ? true : Boolean.parseBoolean(this.videoplaylist.selectSingleNode("@require-ticket").getText());
+        String pMode = this.videoplaylist.selectSingleNode("@play-mode") == null ? null : this.videoplaylist.selectSingleNode("@play-mode").getText();
+        if (pMode != null && pMode.toLowerCase().equals("menu")) {
+            this.playMode = PlayoutMode.menu;
+        }
+        
         String cpUri = "/domain/" + domain + "/user/" + user + "/collection/" + collection + "/presentation/" + presentation;
         String response = LazyHomer.sendRequest("GET", cpUri, "<fsxml><properties><depth>0</depth></properties></fsxml>", "");
         try {
@@ -127,7 +135,7 @@ public class VideoPlaylist {
         List<Node> childs = this.videoplaylist.selectNodes("*");
         for (Node child : childs) {
             if (child.getName().equals("video")) {
-                Video video = new Video(child, this.target, this.method);
+                Video video = new Video(child, this.target, this.method, this.playMode);
                 video.setRequireTicket(this.requireTicket);
                 video.validate();
                 if (video.isValid()) continue;
@@ -135,7 +143,7 @@ public class VideoPlaylist {
                 this.valid = false;
                 return;
             } else if (child.getName().equals("audio")) {
-        	Audio audio = new Audio(child, this.target, this.method);
+        	Audio audio = new Audio(child, this.target, this.method, this.playMode);
                 audio.setRequireTicket(this.requireTicket);
                 audio.validate();
                 if (audio.isValid()) continue;
@@ -156,7 +164,9 @@ public class VideoPlaylist {
 
     public void process() {
         if (this.method.equals("add")) {
-            String fsxml = "<fsxml><properties/></fsxml>";
+            String mode = playMode == PlayoutMode.menu ? "menu" : "continuous";
+            
+            String fsxml = "<fsxml><properties><play-mode>"+mode+"</play-mode></properties></fsxml>";
             String domain = UriParser.getDomainIdFromUri(this.target);
             String user = UriParser.getUserIdFromUri(this.target);
             String collection = UriParser.getCollectionIdFromUri(this.target);
@@ -180,12 +190,12 @@ public class VideoPlaylist {
             List<Node> childs = this.videoplaylist.selectNodes("*");
             for (Node child : childs) {
         	if (child.getName().equals("video")) {
-        	    Video video = new Video(child, this.target, this.method);
+        	    Video video = new Video(child, this.target, this.method, this.playMode);
                     video.setRequireTicket(this.requireTicket);
                     video.validate();
                     video.process();
         	} else if (child.getName().equals("audio")) {
-        	    Audio audio = new Audio(child, this.target, this.method);
+        	    Audio audio = new Audio(child, this.target, this.method, this.playMode);
                     audio.setRequireTicket(this.requireTicket);
                     audio.validate();
                     audio.process();
