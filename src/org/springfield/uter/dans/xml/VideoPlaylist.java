@@ -105,6 +105,7 @@ public class VideoPlaylist {
                 doc = DocumentHelper.parseText((String)response);
                 if (doc.selectSingleNode("//error") == null || ActionFS.instance().isAddedToFS(this.target)) {
                     LOG.error("Cannot create video playlist that's already in FS");
+                    LOG.info("is added ? "+ActionFS.instance().isAddedToFS(this.target));
                     this.valid = false;
                     return;
                 }

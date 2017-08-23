@@ -339,6 +339,8 @@ public class Video {
                                  uri = this.refertarget;
                                  response = LazyHomer.sendRequest("PUT", referid+"/properties/webvtt", FilenameUtils.getBaseName(subtitles.getName())+".vtt", "text/xml");
                                  LOG.info("Adding webtvtt: "+response);
+                                 LOG.info("Removing original srt "+subtitles.getAbsolutePath());
+                                 subtitles.delete();
                              }
                              catch (IOException e) {
                                  LOG.error("Could not convert subtitle from " + subtitles.getAbsolutePath() + " to " + dest.getAbsolutePath());
@@ -346,21 +348,26 @@ public class Video {
                              }
                          }
                          
-                         LOG.debug("moving subtitle to " + folderPath.getAbsolutePath() + "/"+ subtitles.getName());
-                         File dest1 = new File(folderPath + "/" + subtitles.getName());
-                         try {
-                            FileUtils.moveFile(subtitles, dest1);
-                         }
-                         catch (IOException e) {
-                             LOG.error("Could not move subtitle from " + subtitles.getAbsolutePath() + " to " + dest1.getAbsolutePath());
-                             LOG.error(e.toString());
+                         LOG.debug("moving subtitle to " + dest);
+                         
+                         //directly move webvtt file, no conversion needed
+                         if (sType == SubtitleType.WEBVTT) {
+                             File dest1 = new File(folderPath + "/" + subtitles.getName());
+                             
+                             try {
+                                FileUtils.moveFile(subtitles, dest1);
+                             }
+                             catch (IOException e) {
+                                 LOG.error("Could not move subtitle from " + subtitles.getAbsolutePath() + " to " + dest1.getAbsolutePath());
+                                 LOG.error(e.toString());
+                             }
                          }
                          
-                         if (dest.exists() && dest1.exists()) {
+                         if (dest.exists()) {
                              if (sType == SubtitleType.SRT) {
                         	 LOG.info("Sucessfully converted subtitle to vtt "+dest.getAbsolutePath());
                              }
-                             LOG.info("Successfully moved subtitle to " + dest1.getAbsolutePath());
+                             LOG.info("Successfully moved subtitle to " + dest.getAbsolutePath());
                          } else {
                              LOG.error("Failed video processing");
                          }
@@ -387,6 +394,8 @@ public class Video {
                                     uri = this.refertarget;
                                     response = LazyHomer.sendRequest("PUT", referid+"/properties/webvtt_"+sub.getLanguage(), sub.getLanguage() +"_"+ FilenameUtils.getBaseName(subtitles.getName())+".vtt", "text/xml");
                                     LOG.info("Adding webtvtt: "+response);
+                                    LOG.info("Removing original srt "+subtitles.getAbsolutePath());
+                                    subtitles.delete();
                                 }
                                 catch (IOException e) {
                                     LOG.error("Could not convert subtitle from " + subtitles.getAbsolutePath() + " to " + dest.getAbsolutePath());
@@ -394,21 +403,25 @@ public class Video {
                                 }
                             }
                             
-                            LOG.debug("moving subtitle to " + folderPath.getAbsolutePath() +"/"+ sub.getLanguage() +"_"+ subtitles.getName());
-                            File dest1 = new File(folderPath + "/"+ sub.getLanguage() +"_"+ subtitles.getName());
-                            try {
-                               FileUtils.moveFile(subtitles, dest1);
-                            }
-                            catch (IOException e) {
-                                LOG.error("Could not move subtitle from " + subtitles.getAbsolutePath() + " to " + dest1.getAbsolutePath());
-                                LOG.error(e.toString());
+                            LOG.debug("moving subtitle to " + dest);
+                            
+                            //directly move webvtt file, no conversion needed
+                            if (sType == SubtitleType.WEBVTT) {
+                        	File dest1 = new File(folderPath + "/"+ sub.getLanguage() +"_"+ subtitles.getName());
+                        	try {
+                        	    FileUtils.moveFile(subtitles, dest1);
+                        	}
+                        	catch (IOException e) {
+                        	    LOG.error("Could not move subtitle from " + subtitles.getAbsolutePath() + " to " + dest1.getAbsolutePath());
+                        	    LOG.error(e.toString());
+                        	}
                             }
                             
-                            if (dest.exists() && dest1.exists()) {
+                            if (dest.exists()) {
                                 if (sType == SubtitleType.SRT) {
                            	 LOG.info("Sucessfully converted subtitle to vtt "+dest.getAbsolutePath());
                                 }
-                                LOG.info("Successfully moved subtitle to " + dest1.getAbsolutePath());
+                                LOG.info("Successfully moved subtitle to " + dest.getAbsolutePath());
                             } else {
                                 LOG.error("Failed video processing");
                             }
