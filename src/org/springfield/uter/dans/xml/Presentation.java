@@ -181,6 +181,7 @@ public class Presentation {
             for (Node child : childs) {
                 if (!child.getName().equals("video-playlist")) continue;
                 VideoPlaylist videoplaylist = new VideoPlaylist(child, this.target, this.method);
+                videoplaylist.validate();
                 videoplaylist.process();
             }
         }

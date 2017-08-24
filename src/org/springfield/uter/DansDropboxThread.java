@@ -121,9 +121,14 @@ extends Thread {
             this.rejectFile(xml);
             return;
         }
+        
+        //clear as another validate is done per action to fill variables for process()
+        ActionFS.instance().clear();
+        
         for (int j = 0; j < actionArray.length; ++j) {
             actionArray[j].process();
         }
+        
         ActionFS.instance().clear();
         LOG.info("Moving xml file " + xml.getName() + " to /springfield/processed");
         xml.renameTo(new File("/springfield/processed/" + xml.getName()));
