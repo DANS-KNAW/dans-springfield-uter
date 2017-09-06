@@ -21,6 +21,8 @@
 
 package org.springfield.uter;
 
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,7 +53,19 @@ public class UterContextListener implements ServletContextListener {
 		lh.init(servletContext.getRealPath("/"));
 		//fp = new FixProvidersThread();
 		//dbox = new DropboxCheckupThread();
-		dansbox = new DansDropboxThread();
+		
+		//Make sure to start the dropbox after a minute so we are sure 
+		//the rest of the cluster is also up and running
+		System.out.println("Uter: Waiting 1 minute before starting");
+		Timer timer = new Timer();
+		timer.schedule(new TimerTask() {
+		    
+		    @Override
+		    public void run() {
+			System.out.println("Uter: starting dropbox thread");
+			dansbox = new DansDropboxThread();
+		    }
+		}, 60 * 1000);
 	}
 	
 	public void contextDestroyed(ServletContextEvent event) {
