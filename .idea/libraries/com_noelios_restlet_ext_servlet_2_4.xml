@@ -26,6 +26,8 @@
       <root url="jar://$PROJECT_DIR$/WebContent/WEB-INF/lib/springfield-tools.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.ideaLibSources/log4j-1.2.15-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>

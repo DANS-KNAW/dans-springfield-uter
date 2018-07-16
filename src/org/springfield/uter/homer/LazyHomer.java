@@ -620,18 +620,22 @@ public class LazyHomer implements MargeObserver {
 	private class DiscoveryThread extends Thread {
 	    DiscoveryThread() {
 	      super("dthread");
+	      LOG.info("Starting discovery thread for Uter...");
 	      start();
 	    }
 
 	    public void run() {
+	    	LOG.info("Discovery thread for Uter started.");
 	     int counter = 0;
 	      while (LazyHomer.noreply || counter<10) {
+	      	LOG.debug("counter = " + counter);
 	    	if (counter>4 && LazyHomer.noreply) LOG.info("Still looking for smithers on multicast port "+port+" ("+LazyHomer.noreply+")");
 	    	LazyHomer.send("INFO","/domain/internal/service/getname");
 	        try {
 	          sleep(500+(counter*100));
 	          counter++;
 	        } catch (InterruptedException e) {
+	        	LOG.error("Discovery thread for Uter was interrupted");
 	          throw new RuntimeException(e);
 	        }
 	      }
