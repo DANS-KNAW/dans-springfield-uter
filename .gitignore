@@ -1,6 +1,8 @@
 /.idea/workspace.xml
 /bin
 /WebContent/WEB-INF/lib/uter.jar
+/build/
+/war/
 
 
 *.class
