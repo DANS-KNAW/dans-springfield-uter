@@ -59,6 +59,7 @@ extends Thread {
     @Override
     public void run() {
         try {
+            LOG.info("DansDropboxThread started running.");
             while (running) {
                 LOG.info("Running DansDropbox");
                 File[] files = DansDropboxThread.getFiles(importFolder, "xml");
@@ -81,6 +82,8 @@ extends Thread {
                         }
                         this.validateXml(files[i]);
                     }
+                } else {
+                    LOG.warn("Could not retrieve the list of files in the DANS dropbox.");
                 }
                 Thread.sleep(SLEEP);
             }
@@ -88,8 +91,8 @@ extends Thread {
         }
         catch (InterruptedException e) {
             LOG.error("Interrupted exception" + e);
-            LOG.info("Trying to run again");
-            this.run();
+            LOG.info("Trying to restart");
+            this.start();
         }
     }
 
@@ -99,9 +102,10 @@ extends Thread {
             LOG.error("Could not process empty file.");
             return;
         }
+        LOG.debug("Content of file '" + xml + "' = START>>>" + content + "<<<END");
         Document easyXml = null;
         try {
-            easyXml = DocumentHelper.parseText((String)content);
+            easyXml = DocumentHelper.parseText(content);
         }
         catch (DocumentException e) {
             LOG.error("Non valid xml found - "+xml.getName());
@@ -117,7 +121,7 @@ extends Thread {
             actionArray[i] = action = new Action(node);
             ++i;
             if (action.isValid()) continue;
-            LOG.debug("Non valid actions found");
+            LOG.warn("Non valid action found: " + action);
             this.rejectFile(xml);
             return;
         }
@@ -135,6 +139,8 @@ extends Thread {
     }
 
     private void rejectFile(File xml) {
+        LOG.warn("Rejecting file: " + xml);
+        xml.renameTo(new File("/springfield/rejected/" + xml.getName()));
         ActionFS.instance().clear();
     }
 

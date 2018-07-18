@@ -45,7 +45,7 @@ public class UterContextListener implements ServletContextListener {
 		ServletContext servletContext = event.getServletContext();
 		
 		// turn logging off
-		Logger.getLogger("").setLevel(Level.SEVERE);
+		//Logger.getLogger("").setLevel(Level.SEVERE);
 		
 		
  		LazyHomer lh = new LazyHomer();

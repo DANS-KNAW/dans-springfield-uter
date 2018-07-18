@@ -533,6 +533,7 @@ public class LazyHomer implements MargeObserver {
 		Level logLevel = Level.INFO;
 		LOG.getRootLogger().setLevel(Level.OFF);
 		LOG.getLogger(PACKAGE_ROOT).setLevel(logLevel);
+		LOG.setLevel(Level.INFO);
 		LOG.info("logging level: " + logLevel);
 		
 		LOG.info("Initializing logging done.");

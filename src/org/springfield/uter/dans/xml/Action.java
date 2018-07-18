@@ -164,5 +164,9 @@ public class Action {
         queues.put("delete", deleteList);
         return queues;
     }
+
+    @Override public String toString() {
+        return "Action[type = " + type + ", target =  " + target +  "]";
+    }
 }
 
