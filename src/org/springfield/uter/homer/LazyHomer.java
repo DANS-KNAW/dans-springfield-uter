@@ -21,6 +21,21 @@
 
 package org.springfield.uter.homer;
 
+import com.noterik.springfield.tools.HttpHelper;
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.DailyRollingFileAppender;
+import org.apache.log4j.Layout;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
+import org.apache.log4j.xml.DOMConfigurator;
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.Node;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -29,16 +44,13 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
-
-import org.apache.log4j.*;
-import org.dom4j.*;
-
-import com.noterik.springfield.tools.HttpHelper;
 
 
 public class LazyHomer implements MargeObserver {
@@ -65,7 +77,6 @@ public class LazyHomer implements MargeObserver {
 	static String role = "production";
 	private static Map<String, MountProperties> mounts = null;
 
-	
 	/**
 	 * Initializes the configuration
 	 */
@@ -377,14 +388,25 @@ public class LazyHomer implements MargeObserver {
 		System.out.println("SERVER ROLE="+role);
 	}
 
-	
+	private static String getPercentEncodedFullUri(String url) {
+		try {
+			URI s = new URI(getSmithersUrl() + "/"); // Trailing slash to make sure smithers2 context is included.
+			URI fullUri = new URI(s.getScheme(),
+					s.getUserInfo(), s.getHost(), s.getPort(),
+					s.getPath() + url, s.getQuery(), s.getFragment());
+			return fullUri.toASCIIString();
+		} catch (URISyntaxException e) {
+			LOG.error("Could not produce legal URL", e);
+		}
+		return null;
+	}
+
 	public synchronized static String sendRequest(String method,String url,String body,String contentType) {
-		String fullurl = getSmithersUrl()+url;
+		String fullurl = getPercentEncodedFullUri(url);
 		String result = null;
 		boolean validresult = true;
-		
-		//System.out.println("M="+method+" "+fullurl+" "+url);
-		// first try 
+
+		LOG.debug("Sending request. Method = " + method + ", url = " + fullurl + ", body = " + body);
 		try {
 			result = HttpHelper.sendRequest(method, fullurl, body, contentType);
 			if (result.indexOf("<?xml")==-1) {
@@ -393,7 +415,7 @@ public class LazyHomer implements MargeObserver {
 				validresult = false;
 			}
 		} catch(Exception e) {
-			LOG.error("FAIL TYPE TWO ("+fullurl+")");
+			LOG.error("FAIL TYPE TWO ("+fullurl+")", e);
 			LOG.error("XML="+result);
 			validresult = false;
 		}
@@ -414,12 +436,12 @@ public class LazyHomer implements MargeObserver {
 				}
 			} catch(Exception e) {
 				validresult = false;
-				LOG.error("FAIL TYPE FOUR ("+fullurl+")");
+				LOG.error("FAIL TYPE FOUR ("+fullurl+")", e);
 				LOG.error("XML="+result);
 			}
 		}
 		
-		LOG.debug("VALID REQUEST RESULT ("+fullurl+") ");
+		LOG.debug("VALID REQUEST RESULT: " + result);
 		
 		return result;
 	}
@@ -499,45 +521,52 @@ public class LazyHomer implements MargeObserver {
 			LOG.info("logging level: " + logLevel);
 		}
 	}
-	
- 
+
 	/**
 	 * Initializes logger
 	 */
-    private void initLogger() {    	 
-    	System.out.println("Initializing logging.");
-    	
-    	// get logging path
-    	String logPath = LazyHomer.getRootPath().substring(0,LazyHomer.getRootPath().indexOf("webapps"));
-		logPath += "logs/uter/uter.log";	
-		
+	private void initLogger() {
+		System.out.println("Uter: initializing logging.");
 
-		
-		try {
-			// default layout
-			Layout layout = new PatternLayout("%-5p: %d{yyyy-MM-dd HH:mm:ss} %c %x - %m%n");
-			
-			// rolling file appender
-			DailyRollingFileAppender appender1 = new DailyRollingFileAppender(layout,logPath,"'.'yyyy-MM-dd");
-			BasicConfigurator.configure(appender1);
-			
-			// console appender 
-			ConsoleAppender appender2 = new ConsoleAppender(layout);
-			BasicConfigurator.configure(appender2);
+		// get logging path
+		String logPath = LazyHomer.getRootPath()
+				.substring(0, LazyHomer.getRootPath().indexOf("webapps"));
+		logPath += "logs/uter/uter.log";
+
+		File xmlConfig = new File("/springfield/uter/log4j.xml");
+		if (xmlConfig.exists()) {
+			System.out.println("Uter: reading logging config from XML file at " + xmlConfig);
+			DOMConfigurator.configure(xmlConfig.getAbsolutePath());
+			LOG.info("Logging configured from file: " + xmlConfig);
 		}
-		catch(IOException e) {
-			System.out.println("UterServer got an exception while initializing the logger.");
-			e.printStackTrace();
+		else {
+			System.out.println("Uter: configuring logging programmatically");
+			try {
+				// default layout
+				Layout layout = new PatternLayout("%-5p: %d{yyyy-MM-dd HH:mm:ss} %c %x - %m%n");
+
+				// rolling file appender
+				DailyRollingFileAppender appender1 = new DailyRollingFileAppender(layout, logPath,
+						"'.'yyyy-MM-dd");
+				BasicConfigurator.configure(appender1);
+
+				// console appender
+				ConsoleAppender appender2 = new ConsoleAppender(layout);
+				BasicConfigurator.configure(appender2);
+			}
+			catch (IOException e) {
+				System.out.println("UterServer got an exception while initializing the logger.");
+				e.printStackTrace();
+			}
+
+			Level logLevel = Level.INFO;
+			LOG.getRootLogger().setLevel(Level.OFF);
+			LOG.getLogger(PACKAGE_ROOT).setLevel(logLevel);
+
+			LOG.info("logging level: " + logLevel);
 		}
-		
-		Level logLevel = Level.INFO;
-		LOG.getRootLogger().setLevel(Level.OFF);
-		LOG.getLogger(PACKAGE_ROOT).setLevel(logLevel);
-		LOG.setLevel(Level.INFO);
-		LOG.info("logging level: " + logLevel);
-		
 		LOG.info("Initializing logging done.");
-    }
+	}
     
 	public synchronized static String sendRequestBart(String method,String url,String body,String contentType) {
 		String fullurl = getBartUrl()+url;

@@ -45,7 +45,6 @@ public class Collection {
     private boolean valid = false;
 
     public Collection(Node collection, String target, String method) {
-        LOG.setLevel(Level.DEBUG);
         this.collection = collection;
         this.target = target;
         this.method = method;

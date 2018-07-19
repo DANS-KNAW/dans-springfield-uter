@@ -43,18 +43,10 @@ public class UterContextListener implements ServletContextListener {
 	public void contextInitialized(ServletContextEvent event) {
 		System.out.println("Uter: context initialized");
 		ServletContext servletContext = event.getServletContext();
-		
-		// turn logging off
-		//Logger.getLogger("").setLevel(Level.SEVERE);
-		
-		
  		LazyHomer lh = new LazyHomer();
-
 		lh.init(servletContext.getRealPath("/"));
-		//fp = new FixProvidersThread();
-		//dbox = new DropboxCheckupThread();
-		
-		//Make sure to start the dropbox after a minute so we are sure 
+
+		//Make sure to start the dropbox after a minute so we are sure
 		//the rest of the cluster is also up and running
 		System.out.println("Uter: Waiting 1 minute before starting");
 		Timer timer = new Timer();

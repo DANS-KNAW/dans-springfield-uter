@@ -59,7 +59,6 @@ public class Audio {
     private String title;
     
     public Audio(Node audio, String target, String method, PlayoutMode playMode) {
-        LOG.setLevel(Level.DEBUG);
         this.audio = audio;
         this.target = target;
         this.method = method;

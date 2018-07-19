@@ -49,7 +49,6 @@ extends Thread {
     private static int SLEEP = 60000;
 
     public DansDropboxThread() {
-        LOG.setLevel(Level.DEBUG);
         if (!running) {
             running = true;
             this.start();
@@ -93,6 +92,10 @@ extends Thread {
             LOG.error("Interrupted exception" + e);
             LOG.info("Trying to restart");
             this.start();
+        }
+        catch (Exception e) {
+            LOG.fatal("DansDropBoxThread.run() failed to handle an exception", e);
+            throw e;
         }
     }
 

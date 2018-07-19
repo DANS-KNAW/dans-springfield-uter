@@ -46,7 +46,6 @@ public class VideoPlaylist {
     private PlayoutMode playMode = PlayoutMode.continuous;
 
     public VideoPlaylist(Node videoplaylist, String target, String method) {
-        LOG.setLevel(Level.DEBUG);
         this.videoplaylist = videoplaylist;
         this.target = target;
         this.method = method;
