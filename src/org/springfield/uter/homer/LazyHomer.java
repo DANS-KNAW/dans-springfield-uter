@@ -263,6 +263,7 @@ public class LazyHomer implements MargeObserver {
 	
 	public static void setLastSeen() {
 		Long value = new Date().getTime();
+		LOG.debug("Sending lastseen value to Smithers: " + value);
 		LazyHomer.sendRequest("PUT", "/domain/internal/service/uter/nodes/"+myip+"/properties/lastseen", ""+value, "text/xml");
 	}
 	
@@ -390,6 +391,7 @@ public class LazyHomer implements MargeObserver {
 
 	private static String getPercentEncodedFullUri(String url) {
 		try {
+			if (url.startsWith("/") && url.length() > 1) url = url.substring(1);
 			URI s = new URI(getSmithersUrl() + "/"); // Trailing slash to make sure smithers2 context is included.
 			URI fullUri = new URI(s.getScheme(),
 					s.getUserInfo(), s.getHost(), s.getPort(),

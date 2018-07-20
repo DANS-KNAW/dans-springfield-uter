@@ -94,6 +94,7 @@ public class Presentation {
             LOG.debug("Received response: START>>>" + response + "<<<END");
             try {
                 doc = DocumentHelper.parseText(response);
+                // If there is an error it probably means the presentation is not yet in the FS, which is good, unless we ar
                 if (doc.selectSingleNode("//error") != null && !ActionFS.instance().isAddedToFS(this.target)) {
                     LOG.error("Cannot create presentation as no parent collection was created in FS - "+this.target);
                     this.valid = false;
@@ -111,6 +112,7 @@ public class Presentation {
             LOG.debug("Received response: START>>>" + response + "<<<END");
             try {
                 doc = DocumentHelper.parseText(response);
+                // If there is no error it means that the presentation is already present
                 if (doc.selectSingleNode("//error") == null || ActionFS.instance().isAddedToFS(this.target)) {
                     LOG.error("Cannot create presentation that's already in FS - "+this.target);
                     this.valid = false;
