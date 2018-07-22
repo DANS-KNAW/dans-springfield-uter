@@ -27,6 +27,7 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.DailyRollingFileAppender;
 import org.apache.log4j.Layout;
 import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.apache.log4j.xml.DOMConfigurator;
@@ -528,12 +529,12 @@ public class LazyHomer implements MargeObserver {
 	 * Initializes logger
 	 */
 	private void initLogger() {
-		System.out.println("Uter: initializing logging.");
-
+		System.out.println("Uter: initializing logging. Current logger repo = " + LogManager.getLoggerRepository());
 		// get logging path
-		String logPath = LazyHomer.getRootPath()
-				.substring(0, LazyHomer.getRootPath().indexOf("webapps"));
-		logPath += "logs/uter/uter.log";
+//		String logPath = LazyHomer.getRootPath()
+//				.substring(0, LazyHomer.getRootPath().indexOf("webapps"));
+//		logPath += "logs/uter/uter.log";
+    String logPath = "";
 
 		File xmlConfig = new File("/springfield/uter/log4j.xml");
 		if (xmlConfig.exists()) {
@@ -568,6 +569,7 @@ public class LazyHomer implements MargeObserver {
 			LOG.info("logging level: " + logLevel);
 		}
 		LOG.info("Initializing logging done.");
+		System.out.println("Uter works with logger repository: " + LogManager.getLoggerRepository());
 	}
     
 	public synchronized static String sendRequestBart(String method,String url,String body,String contentType) {
