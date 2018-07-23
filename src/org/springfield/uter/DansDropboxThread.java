@@ -63,7 +63,7 @@ extends Thread {
                 LOG.info("Running DansDropbox");
                 File[] files = DansDropboxThread.getFiles(importFolder, "xml");
                 if (files != null) {
-                    LOG.debug("Found " + files.length + " xml files to process");
+                    LOG.info("Found " + files.length + " xml files to process");
                     for (int i = 0; i < files.length; ++i) {
                         Date fileLastModifiedDate = new Date(files[i].lastModified());
                         Date currentDate = new Date();
