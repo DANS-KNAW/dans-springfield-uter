@@ -116,7 +116,7 @@ public class Fs {
 					}
 				}
 			} else {
-				System.out.println("IS SUBNODE");
+				System.out.println("UTER: IS SUBNODE");
 				for(Iterator<Node> iter = doc.getRootElement().nodeIterator(); iter.hasNext(); ) {
 					Element node = (Element)iter.next();
 					for(Iterator<Node> iter2 = node.nodeIterator(); iter2.hasNext(); ) {

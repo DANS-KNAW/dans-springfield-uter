@@ -89,10 +89,10 @@ public class FSList {
 		List<FsNode> result = new ArrayList<FsNode>();
 		for(Iterator<FsNode> iter = nodes.iterator() ; iter.hasNext(); ) {
 			FsNode n = (FsNode)iter.next();	
-			System.out.println("NAME="+name);
+			System.out.println("UTER: NAME="+name);
 			if (n.getName().equals(name)) {
 				String field = n.getProperty(searchlabel);
-				System.out.println("F="+field+" K="+searchkey);
+				System.out.println("UTER: F="+field+" K="+searchkey);
 				if (field.indexOf(searchkey)!=-1) {
 					result.add(n);
 				}
