@@ -46,7 +46,7 @@ extends Thread {
     private static boolean running = false;
     private static String importFolder = "/springfield/inbox";
     private static int TIMEOUT = 300;
-    private static int SLEEP = 60000;
+    private static int SLEEP = 30000;
 
     public DansDropboxThread() {
         if (!running) {
