@@ -22,9 +22,12 @@
 package org.springfield.uter.dans.xml;
 
 import java.util.LinkedList;
+
+import org.apache.log4j.Logger;
 import org.springfield.uter.dans.xml.FSActionPair;
 
 public class ActionFS {
+    private static Logger LOG = Logger.getLogger(ActionFS.class);
     private LinkedList<FSActionPair> actions = new LinkedList();
     private static ActionFS instance;
 
@@ -44,9 +47,12 @@ public class ActionFS {
     }
 
     public boolean isAddedToFS(String uri) {
+        LOG.debug("Calling isAddedToFS: " + uri);
         boolean added = false;
         for (FSActionPair action : this.actions) {
+            LOG.debug("Checking action: " + action);
             if (action.contains("add", uri)) {
+                LOG.debug("FOUND match");
                 added = true;
             }
             if (!action.contains("delete", uri)) continue;

@@ -41,35 +41,27 @@ public class UterContextListener implements ServletContextListener {
 	private static DansDropboxThread dansbox = null;
 	
 	public void contextInitialized(ServletContextEvent event) {
-		System.out.println("Uter: context initialized");
+		System.out.println("UTER: context initialized");
 		ServletContext servletContext = event.getServletContext();
-		
-		// turn logging off
-		Logger.getLogger("").setLevel(Level.SEVERE);
-		
-		
  		LazyHomer lh = new LazyHomer();
-
 		lh.init(servletContext.getRealPath("/"));
-		//fp = new FixProvidersThread();
-		//dbox = new DropboxCheckupThread();
-		
-		//Make sure to start the dropbox after a minute so we are sure 
+
+		//Make sure to start the dropbox after a minute so we are sure
 		//the rest of the cluster is also up and running
-		System.out.println("Uter: Waiting 1 minute before starting");
+		System.out.println("UTER: Waiting 1 minute before starting");
 		Timer timer = new Timer();
 		timer.schedule(new TimerTask() {
 		    
 		    @Override
 		    public void run() {
-			System.out.println("Uter: starting dropbox thread");
+			System.out.println("UTER: starting dropbox thread");
 			dansbox = new DansDropboxThread();
 		    }
 		}, 60 * 1000);
 	}
 	
 	public void contextDestroyed(ServletContextEvent event) {
-		System.out.println("Uter: context destroyed");
+		System.out.println("UTER: context destroyed");
 		if(dbox!=null) {
 			try {
 				dbox.stopTask();
@@ -77,7 +69,7 @@ public class UterContextListener implements ServletContextListener {
 				dbox.join();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
-				System.out.println("Uter: context destroyed: " + e);
+				System.out.println("UTER: context destroyed: " + e);
 			}
 		}
 		if(fp!=null) {
@@ -88,7 +80,7 @@ public class UterContextListener implements ServletContextListener {
 				fp.join();
 			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
-				System.out.println("Uter: context destroyed: " + e);
+				System.out.println("UTER: context destroyed: " + e);
 			}
 		}
 		
@@ -99,7 +91,7 @@ public class UterContextListener implements ServletContextListener {
                 dansbox.join();
             }
             catch (InterruptedException e) {
-                System.out.println("Uter: context destroyed: " + e);
+                System.out.println("UTER: context destroyed: " + e);
             }
         }
 		

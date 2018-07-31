@@ -59,9 +59,9 @@ public class FsTimeLine implements MargeObserver {
 			Collections.sort(list);
 		}
 		
-		System.out.println("-----------------------------");
-		System.out.println("LISTEN TO: " + path);
-		System.out.println("-----------------------------");
+		System.out.println("UTER: -----------------------------");
+		System.out.println("UTER: LISTEN TO: " + path);
+		System.out.println("UTER: -----------------------------");
 		if(!observing.contains(path + "/")){
 			LazyMarge.addObserver(path + "/*", this);
 		}
@@ -182,6 +182,6 @@ public class FsTimeLine implements MargeObserver {
 			updateObservers("PUT", type, id);
 		}
 		
-		System.out.println("FsTimeLine.remoteSignal(from: " + from + ", method: " + method + ", url: " + url);
+		System.out.println("UTER: FsTimeLine.remoteSignal(from: " + from + ", method: " + method + ", url: " + url);
 	}
 }

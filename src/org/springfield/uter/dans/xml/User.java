@@ -42,7 +42,6 @@ public class User {
     private boolean valid = false;
 
     public User(Node user, String target, String method) {
-        LOG.setLevel(Level.DEBUG);
         this.user = user;
         this.target = target;
         this.method = method;

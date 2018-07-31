@@ -70,7 +70,7 @@ public class UterServlet extends HttpServlet {
      */
     public UterServlet() {
         super();
-        System.out.println("Uter servlet object created");
+        System.out.println("UTER: servlet object created");
         // TODO Auto-generated constructor stub
     }
     
@@ -93,10 +93,10 @@ public class UterServlet extends HttpServlet {
 		response.addHeader("Access-Control-Allow-Methods","GET, POST, PUT, DELETE, OPTIONS");
 		response.addHeader("Access-Control-Allow-Headers", "Content-Type");
 		String body = request.getRequestURI();
-		System.out.println("INCOMMING!! REQUEST IS="+body);
+		System.out.println("UTER: INCOMING!! REQUEST IS="+body);
 		if(request.getParameter("method")!=null) {
 			if(request.getParameter("method").equals("post")){
-				System.out.println("going for post");
+				System.out.println("UTER: going for post");
 				doPost(request, response);
 				return;
 			}
@@ -122,7 +122,7 @@ public class UterServlet extends HttpServlet {
 		response.addHeader("Access-Control-Allow-Headers", "Content-Type");
 		
 		String uri = request.getRequestURI();
-		System.out.println("UTER INCOMMING REQUEST IS="+uri);
+		System.out.println("UTER: INCOMING REQUEST IS="+uri);
 		//read post data
 		StringBuffer jb = new StringBuffer();
 		String line = null;
@@ -135,12 +135,12 @@ public class UterServlet extends HttpServlet {
 		
 		String xml = jb.toString();
 		
-		System.out.println("PARAMS="+jb.toString());
+		System.out.println("UTER: PARAMS="+jb.toString());
 		Document doc = null;
 		try {
 			doc = DocumentHelper.parseText(xml);
 		} catch(DocumentException e) {
-			System.out.println("XML parsing error: " + e);
+			System.out.println("UTER: XML parsing error: " + e);
 		}
 		
 		String springfieldid=null,springfieldpath=null,language=null,title=null,content=null;
@@ -209,8 +209,8 @@ public class UterServlet extends HttpServlet {
 		*/
 		body += "</properties></fsxml>";
 		
-		System.out.println("Saving page: " + springfieldpath + "/" + springfieldid);
-		System.out.println("PRoperties: " + body);
+		System.out.println("UTER: Saving page: " + springfieldpath + "/" + springfieldid);
+		System.out.println("UTER: Properties: " + body);
 		String res = LazyHomer.sendRequest("PUT",springfieldpath + "/" + springfieldid + "/properties",body,"text/xml");
 		PrintWriter out = response.getWriter();
 		out.print(res);

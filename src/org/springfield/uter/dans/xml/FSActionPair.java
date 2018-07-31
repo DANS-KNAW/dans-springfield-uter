@@ -36,5 +36,9 @@ public class FSActionPair {
         }
         return false;
     }
+
+    @Override public String toString() {
+        return "FSActionPair[method = " + method + ", uri = " + uri + "]";
+    }
 }
 

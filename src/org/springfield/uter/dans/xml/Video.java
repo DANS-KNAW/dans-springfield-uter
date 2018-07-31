@@ -64,7 +64,6 @@ public class Video {
     enum SubtitleType { SRT, WEBVTT };
 
     public Video(Node video, String target, String method, PlayoutMode playMode) {
-        LOG.setLevel(Level.DEBUG);
         this.video = video;
         this.target = target;
         this.method = method;

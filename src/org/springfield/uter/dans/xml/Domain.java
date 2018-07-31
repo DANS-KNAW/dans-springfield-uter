@@ -41,7 +41,6 @@ public class Domain {
     private boolean valid = false;
 
     public Domain(Node domain, String target, String method) {
-        LOG.setLevel(Level.DEBUG);
         this.domain = domain;
         this.target = target;
         this.method = method;

@@ -41,7 +41,6 @@ public class Action {
     private ArrayList<Object> actionList;
 
     public Action(Node action) {
-        LOG.setLevel(Level.DEBUG);
         this.actionList = new ArrayList();
         this.type = action.getName();
         String string = this.target = action.selectSingleNode("@target") == null ? "" : action.selectSingleNode("@target").getText();
@@ -96,6 +95,7 @@ public class Action {
     }
 
     public boolean isValid() {
+        LOG.debug("Calling Action.isValid on a " + this.getClass().getName());
         for (Object o : this.actionList) {
             boolean valid;
             if (o instanceof Domain) {
@@ -163,6 +163,10 @@ public class Action {
         queues.put("add", addList);
         queues.put("delete", deleteList);
         return queues;
+    }
+
+    @Override public String toString() {
+        return "Action[type = " + type + ", target =  " + target +  "]";
     }
 }
 

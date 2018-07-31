@@ -45,18 +45,20 @@ public class Presentation {
     private String description;
 
     public Presentation(Node presentation, String target, String method) {
-        LOG.setLevel(Level.DEBUG);
         this.presentation = presentation;
         this.target = target;
         this.method = method;
     }
 
     public void validate() {
+        LOG.debug("Calling Presentation.validate()");
         String response;
         Document doc;
         String domain = UriParser.getDomainIdFromUri(this.target);
         String user = UriParser.getUserIdFromUri(this.target);
         String collection = UriParser.getCollectionIdFromUri(this.target);
+
+        LOG.debug("domain = " + domain + ", user = " + user + ", collection = " + collection);
         if (domain == null) {
             LOG.error("Target for presentation not as expected, domain missing");
             this.valid = false;
@@ -73,18 +75,26 @@ public class Presentation {
             return;
         }
         this.name = this.presentation.selectSingleNode("@name") == null ? null : this.presentation.selectSingleNode("@name").getText();
+        LOG.debug("name = " + name);
         this.title = this.presentation.selectSingleNode("title") == null ? "" : this.presentation.selectSingleNode("title").getText();
-        String string = this.description = this.presentation.selectSingleNode("description") == null ? "" : this.presentation.selectSingleNode("description").getText();
+        LOG.debug("title = " + title);
+        this.description = this.presentation.selectSingleNode("description") == null ? "" : this.presentation.selectSingleNode("description").getText();
+        LOG.debug("description = " + description);
         if (this.name == null) {
             LOG.error("No name defined for presentation");
             this.valid = false;
             return;
         }
         this.refertarget = "/domain/" + domain + "/user/" + user + "/presentation";
+        LOG.debug("refertarget = " + refertarget);
+        LOG.debug("method = " + method);
         if (this.method.equals("add")) {
+            LOG.debug("Requesting properties for " + this.target);
             response = LazyHomer.sendRequest("GET", this.target, "<fsxml><properties><depth>0</depth></properties></fsxml>", "");
+            LOG.debug("Received response: START>>>" + response + "<<<END");
             try {
-                doc = DocumentHelper.parseText((String)response);
+                doc = DocumentHelper.parseText(response);
+                // If there is an error it probably means the presentation is not yet in the FS, which is good, unless we ar
                 if (doc.selectSingleNode("//error") != null && !ActionFS.instance().isAddedToFS(this.target)) {
                     LOG.error("Cannot create presentation as no parent collection was created in FS - "+this.target);
                     this.valid = false;
@@ -97,11 +107,14 @@ public class Presentation {
                 return;
             }
             this.target = this.target + "/presentation/" + this.name;
+            LOG.debug("Requesting properties for " + this.target);
             response = LazyHomer.sendRequest("GET", this.target, "<fsxml><properties><depth>0</depth></properties></fsxml>", "");
+            LOG.debug("Received response: START>>>" + response + "<<<END");
             try {
-                doc = DocumentHelper.parseText((String)response);
+                doc = DocumentHelper.parseText(response);
+                // If there is no error it means that the presentation is already present
                 if (doc.selectSingleNode("//error") == null || ActionFS.instance().isAddedToFS(this.target)) {
-                    LOG.error("Cannot create presentation that's already in FS - "+this.target+"/presentation/"+this.name);
+                    LOG.error("Cannot create presentation that's already in FS - "+this.target);
                     this.valid = false;
                     return;
                 }
