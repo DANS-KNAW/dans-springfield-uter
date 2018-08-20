@@ -78,8 +78,9 @@ public class LazyHomer implements MargeObserver {
 	public void init(String r) {
 		rootPath = r;
 		ins = this;
-		initConfig();
 		initLogger();
+		initConfig();
+
 		
 		try{
 			InetAddress mip=InetAddress.getLocalHost();
@@ -525,12 +526,12 @@ public class LazyHomer implements MargeObserver {
 	private void initLogger() {
 		File xmlConfig = new File("/springfield/uter/log4j.xml");
 		if (xmlConfig.exists()) {
-			log.debug("Reading logging config from XML file at " + xmlConfig);
+			System.out.println("UTER: Reading logging config from XML file at " + xmlConfig);
 			DOMConfigurator.configure(xmlConfig.getAbsolutePath());
 			log.info("Logging configured from file: " + xmlConfig);
 		}
 		else {
-			log.debug("Could not find logger config at " + xmlConfig);
+			System.out.println("UTER: Could not find logger config at " + xmlConfig);
 		}
 		log.info("Initializing logging done.");
 	}
