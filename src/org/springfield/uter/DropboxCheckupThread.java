@@ -33,6 +33,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+
+import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -41,6 +43,7 @@ import org.springfield.uter.fs.*;
 import org.springfield.uter.homer.LazyHomer;
 
 public class DropboxCheckupThread extends Thread {
+	private static final Logger log = Logger.getLogger(DropboxCheckupThread.class);
 	private static boolean running = false;
 	private static ArrayList<String> singlenodes = new ArrayList<String>(Arrays.asList("provider","publisherbroadcaster","iprRestrictions","rightsTermsAndConditions","firstBroadcastChannel","identifier","originalIdentifier","originalIdentifier","filename","digitalItemURL","landingPageURL","originallanguage","LocalKeyword","clipTitle","genre", "topic", "originallanguage","summary",
 			"summaryInEnglish","ThesaurusTerm","extendedDescription","SeriesSeasonNumber","episodeNumber",
@@ -62,7 +65,7 @@ public class DropboxCheckupThread extends Thread {
 	//private static String[] providerList = new String[] {"eu_ina"};
 	
 	public DropboxCheckupThread() {
-		System.out.println("STARTING UTERTHREAD");
+		log.debug("STARTING UTERTHREAD");
 		if (!running) {
 			running = true;
 			start();
@@ -73,7 +76,7 @@ public class DropboxCheckupThread extends Thread {
 		try {
 			while (running) {
 				try {
-					System.out.println("Uter: running");
+					log.debug("running");
 					Thread.sleep(5*1000);
 					for(String provider : providerList) {
 						
@@ -82,31 +85,31 @@ public class DropboxCheckupThread extends Thread {
 						FtpIngester.checkProviderAudio(provider);
 						FtpIngester.checkProviderPicture(provider);
 						FtpIngester.checkProviderDoc(provider);
-						System.out.println("Sleeping for " + INNER_SLEEP/1000 + " seconds");
+						log.debug("Sleeping for " + INNER_SLEEP/1000 + " seconds");
 						Thread.sleep(INNER_SLEEP);
 						
 					}
 					INNER_SLEEP = 10*60*1000; // Sleep 10 minutes between providers after first loop
-					System.out.println("Sleeping for " + LOOP_SLEEP/(60*60*1000) + " hours");
+					log.debug("Sleeping for " + LOOP_SLEEP/(60*60*1000) + " hours");
 					Thread.sleep(LOOP_SLEEP);
 				} catch(Exception e) {
-					System.out.println("Uter: error loop 1: ");
+					log.debug("error loop 1: ");
 					e.printStackTrace();
 					running=false;
 				}
 			}
 			
-			System.out.println("Uter: stopping");	
+			log.debug("stopping");
 		} catch(Exception e2) {
-			System.out.println("Uter: error loop 2");	
+			log.debug("error loop 2");
 		}
 	}
 
 	private void euscreenConvert(String provider) {
-		System.out.println("CONVERTING : "+provider);
+		log.debug("CONVERTING : "+provider);
 		FsNode userNode = Fs.getNode("/domain/euscreenxl/user/"+provider);
 		if(userNode==null) {
-			System.out.println("creating user " + provider);
+			log.debug("creating user " + provider);
 			String xml = "<fsxml><properties></properties></fsxml>";
 			String res = LazyHomer.sendRequest("PUT","/domain/euscreenxl/user/"+provider+"/properties",xml,"text/xml");
 		}
@@ -117,12 +120,12 @@ public class DropboxCheckupThread extends Thread {
         	BufferedReader in = new BufferedReader(new InputStreamReader(site.openStream()));
         	String line;
         	while ((line = in.readLine()) != null) {
-        		System.out.println("PROVIDER="+provider+" LINE="+line);
+        		log.debug("PROVIDER="+provider+" LINE="+line);
         		euscreenConvertItem(provider,line);
         	}
         	in.close();
         } catch(Exception e) {
-        	System.out.println("EuscreenXL convert");
+        	log.debug("EuscreenXL convert");
         	e.printStackTrace();
         }
 	}
@@ -139,10 +142,10 @@ public class DropboxCheckupThread extends Thread {
         	}
         	in.close();
         } catch(Exception e) {
-        	System.out.println("EuscreenXL body convert");
+        	log.debug("EuscreenXL body convert");
         	e.printStackTrace();
         }
-        // System.out.println(body);
+        // log.debug(body);
         
         // lets parse what we have info fsnodes and commit them
         
@@ -175,7 +178,7 @@ public class DropboxCheckupThread extends Thread {
 				}
 			}
 		} catch (Exception e) {
-			System.out.println("EuscreenXL parse xml error");
+			log.debug("EuscreenXL parse xml error");
 			e.printStackTrace();
 		}
 		
@@ -198,7 +201,7 @@ public class DropboxCheckupThread extends Thread {
 		
 		String filename = fsnode.getProperty("filename");
 		if(filename==null && !fsType.equals("series")) {
-			System.out.println("Item has no filename!!! Skipping.");
+			log.debug("Item has no filename!!! Skipping.");
 			return;
 		}
 		
@@ -217,7 +220,7 @@ public class DropboxCheckupThread extends Thread {
 				int decade = (int) Math.ceil(iyear/10)*10;
 				fsnode.setProperty("decade", Integer.toString(decade) + "s");
 			} catch(Exception e) {
-				System.out.println("YEAR NOT A VALID INT");
+				log.debug("YEAR NOT A VALID INT");
 			}
 		} else {
 			fsnode.setProperty("decade", "1800s");
@@ -245,10 +248,10 @@ public class DropboxCheckupThread extends Thread {
 				newbody+="<"+key+">"+value+"</"+key+">\n";
 			}
 
-			//System.out.println("NAME="+key+" VALUE="+fsnode.getProperty(key));
+			//log.debug("NAME="+key+" VALUE="+fsnode.getProperty(key));
 		}
     	newbody+="</properties></fsxml>";
-    	//System.out.println("NEWBODY="+newbody);
+    	//log.debug("NEWBODY="+newbody);
     	
 		String result = LazyHomer.sendRequest("PUT","/domain/euscreenxl/user/"+provider+"/"+fsType+"/"+eus_id+"/properties",newbody,"text/xml");
 		if(fsType.equals("series")) { //Check for old video nodes that should not be there.
@@ -257,11 +260,11 @@ public class DropboxCheckupThread extends Thread {
 				LazyHomer.sendRequest("DELETE","/domain/euscreenxl/user/"+provider+"/video/"+eus_id, null, null);
 			}
 		}
-		//System.out.println("RESULTD="+result);
+		//log.debug("RESULTD="+result);
 	}
 	
 	private String[] checkVersions(String provider, String eus_id) {
-		System.out.println("Checking versions for: " + provider + " " + eus_id);
+		log.debug("Checking versions for: " + provider + " " + eus_id);
 		String basePath = "/usr/local/sites/noterik/domain/euscreen/user/";
 		String path = basePath + provider;
 		File currentVersion = new File(path + File.separator + eus_id + ".xml");
@@ -278,7 +281,7 @@ public class DropboxCheckupThread extends Thread {
 	    response[0] = Long.toString(currentDate) + " (" + currentimportdate + ")";
 	    
 	    versionPattern = eus_id;
-	    //System.out.println("Checking versions in: " + path + File.separator + "backup");
+	    //log.debug("Checking versions in: " + path + File.separator + "backup");
 	    File dir = new File(path + File.separator + "backup");
 	    File[] files = dir.listFiles(new FilenameFilter() {
 	        @Override
@@ -293,7 +296,7 @@ public class DropboxCheckupThread extends Thread {
 	    	response[1] = response[0];
 	    	return response;
 	    }
-	    System.out.println("VERSIONS FOUND FOR: " + eus_id + "(" + files.length  + ")");
+	    log.debug("VERSIONS FOUND FOR: " + eus_id + "(" + files.length  + ")");
 	    ArrayList<Long> versions = new ArrayList<Long>(files.length); 
 	    for(int i=0; i<files.length;i++) {
 	    	File f = files[i];

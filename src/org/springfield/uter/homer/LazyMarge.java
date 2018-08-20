@@ -31,6 +31,7 @@ import org.apache.log4j.Logger;
 
 
 public class LazyMarge extends Thread {
+	private static final Logger log = Logger.getLogger(LazyMarge.class);
 	
 	String group = "224.0.0.0";
 	int errorcounter = 0;
@@ -97,13 +98,13 @@ public class LazyMarge extends Thread {
 							String inc = result[0];
 							int pos = inc.indexOf(":");
 							if (pos==-1) {
-								System.out.println("UTER: FATAL ERROR OLD ADD SMITHERS STYLE (NOT IP:PORT:MPORT) "+inc);
+								log.debug("FATAL ERROR OLD ADD SMITHERS STYLE (NOT IP:PORT:MPORT) "+inc);
 							} else {
 								String ipn = inc.substring(0,pos);
 								String pon = inc.substring(pos+1);
 								pos = pon.indexOf(":");
 								if (pos==-1) {
-									System.out.println("UTER: FATAL ERROR OLD ADD SMITHERS STYLE (NOT IP:PORT:MPORT) "+inc);	
+									log.debug("FATAL ERROR OLD ADD SMITHERS STYLE (NOT IP:PORT:MPORT) "+inc);
 								} else {
 									String mpon = pon.substring(pos+1);
 									pon = pon.substring(0,pos);
@@ -123,13 +124,13 @@ public class LazyMarge extends Thread {
 							String inc = result[0];
 							int pos = inc.indexOf(":");
 							if (pos==-1) {
-								System.out.println("UTER FATAL ERROR OLD ADD SMITHERS STYLE (NOT IP:PORT:MPORT) "+inc);
+								log.debug("UTER FATAL ERROR OLD ADD SMITHERS STYLE (NOT IP:PORT:MPORT) "+inc);
 							} else {
 								String ipn = inc.substring(0,pos);
 								String pon = inc.substring(pos+1);
 								pos = pon.indexOf(":");
 								if (pos==-1) {
-									System.out.println("UTER FATAL ERROR OLD ADD SMITHERS STYLE (NOT IP:PORT:MPORT) "+inc);	
+									log.debug("UTER FATAL ERROR OLD ADD SMITHERS STYLE (NOT IP:PORT:MPORT) "+inc);
 								} else {
 									String mpon = pon.substring(pos+1);
 									pon = pon.substring(0,pos);
