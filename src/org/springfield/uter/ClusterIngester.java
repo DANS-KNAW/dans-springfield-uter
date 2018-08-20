@@ -28,6 +28,7 @@ import java.util.List;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
@@ -39,6 +40,8 @@ import org.springfield.uter.homer.LazyHomer;
 import com.noterik.springfield.tools.HttpHelper;
 
 public class ClusterIngester {
+	private static final Logger log = Logger.getLogger(ClusterIngester.class);
+
 	private static String[] frinkServers = new String[] {"frink1.noterik.com","frink2.noterik.com","frink5.noterik.com"};
 	private static String[] bartServers = new String[] {"bart1.noterik.com","bart2.noterik.com","bart5.noterik.com"};
 	private static String screenshotProperty = "";
@@ -64,7 +67,7 @@ public class ClusterIngester {
 		try {
 			nss = URLEncoder.encode(filename, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			System.out.println("could not urlencode: " + filename);
+			log.debug("could not urlencode: " + filename);
 		}
 		frinkUrl += "?nid=" + nid + "&nss=" + nss;
 		String response = sendFrinkRequest(frinkUrl);
@@ -75,13 +78,13 @@ public class ClusterIngester {
 		if(response==null) return false;
 		String itemUri = "";
 		
-		System.out.println("response = "+response);
+		log.debug("response = "+response);
 		
 		try {
 			Document doc = DocumentHelper.parseText(response);
 			List<Node> urns = doc.selectNodes("//urn");
 			if(urns.isEmpty()) {
-				System.out.println("Frink collection does not exist: " + frinkUrl);
+				log.debug("Frink collection does not exist: " + frinkUrl);
 				return false;
 			}
 			for (Iterator<Node> cIter = urns.iterator(); cIter.hasNext();) {
@@ -93,11 +96,11 @@ public class ClusterIngester {
 				}
 			}
 			if(itemUri.equals("")) {
-				System.out.println("Incomplete FRINK data: " + frinkUrl);
+				log.debug("Incomplete FRINK data: " + frinkUrl);
 				return false;
 			}
 		} catch (DocumentException e) {
-			System.out.println("could not get presentationuri from frink"+response);
+			log.debug("could not get presentationuri from frink"+response);
 		}
 		
 		String bartUrl = itemUri;
@@ -212,14 +215,14 @@ public class ClusterIngester {
 			 
 			Element presentationVideo = (Element) doc.selectSingleNode("//video");
 			if(presentationVideo==null) {
-				System.out.println("Error getting video");
+				log.debug("Error getting video");
 				return null; // node not found
 			}
 			
 			
 			String videoUri = presentationVideo.attributeValue("referid");
 			if(videoUri==null) return null;
-			System.out.println("Video uri: " + videoUri);
+			log.debug("Video uri: " + videoUri);
 			response = sendBartRequest(videoUri, 1);
 			
 			if(response==null) return null;
@@ -233,7 +236,7 @@ public class ClusterIngester {
 				doc = DocumentHelper.parseText(response);
 				mountNode = doc.selectSingleNode("//rawvideo/properties/mount");
 				if(mountNode==null) {
-					System.out.println("Error getting rawvideo");
+					log.debug("Error getting rawvideo");
 					return null;
 				}
 				//return false; // node not found
@@ -297,19 +300,19 @@ public class ClusterIngester {
 		boolean validresult = true;
 		String result = null;
 		String fullurl = "http://" + getFrinkServer() + "/frink/collection" + url;
-		//System.out.println("M="+method+" "+fullurl+" "+url);
+		//log.debug("M="+method+" "+fullurl+" "+url);
 		// first try 
 		try {
 			result = HttpHelper.sendRequest("GET",fullurl, null, null);
 			if (result.indexOf("<?xml")==-1) {
-				System.out.println("FRINK FAIL TYPE ONE ("+fullurl+")");
-				System.out.println("XML="+result);
+				log.debug("FRINK FAIL TYPE ONE ("+fullurl+")");
+				log.debug("XML="+result);
 				validresult = false;
 				result=null;
 			}
 		} catch(Exception e) {
-			System.out.println("FRINK FAIL TYPE TWO ("+fullurl+")");
-			System.out.println("XML="+result);
+			log.debug("FRINK FAIL TYPE TWO ("+fullurl+")");
+			log.debug("XML="+result);
 			validresult = false;
 			result=null;
 		}
@@ -326,14 +329,14 @@ public class ClusterIngester {
 		try {
 			result = HttpHelper.sendRequest("GET",fullurl, xml, "text/xml");
 			if (result.indexOf("<?xml")==-1) {
-				System.out.println("FRINK FAIL TYPE ONE ("+fullurl+")");
-				System.out.println("XML="+result);
+				log.debug("FRINK FAIL TYPE ONE ("+fullurl+")");
+				log.debug("XML="+result);
 				validresult = false;
 				return null;
 			}
 		} catch(Exception e) {
-			System.out.println("FRINK FAIL TYPE TWO ("+fullurl+")");
-			System.out.println("XML="+result);
+			log.debug("FRINK FAIL TYPE TWO ("+fullurl+")");
+			log.debug("XML="+result);
 			validresult = false;
 			return null;
 		}
@@ -350,7 +353,7 @@ public class ClusterIngester {
 		try {
 			nss = URLEncoder.encode(filename, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			System.out.println("could not urlencode: " + filename);
+			log.debug("could not urlencode: " + filename);
 		}
 		frinkUrl += "?nid=" + nid + "&nss=" + nss;
 		String response = sendFrinkRequest(frinkUrl);
@@ -361,13 +364,13 @@ public class ClusterIngester {
 		if(response==null) return null;
 		String itemUri = "";
 		
-		System.out.println("response = "+response);
+		log.debug("response = "+response);
 		
 		try {
 			Document doc = DocumentHelper.parseText(response);
 			List<Node> urns = doc.selectNodes("//urn");
 			if(urns.isEmpty()) {
-				System.out.println("Frink collection does not exist: " + frinkUrl);
+				log.debug("Frink collection does not exist: " + frinkUrl);
 				return null;
 			}
 			for (Iterator<Node> cIter = urns.iterator(); cIter.hasNext();) {
@@ -379,11 +382,11 @@ public class ClusterIngester {
 				}
 			}
 			if(itemUri.equals("")) {
-				System.out.println("Incomplete FRINK data: " + frinkUrl);
+				log.debug("Incomplete FRINK data: " + frinkUrl);
 				return null;
 			}
 		} catch (DocumentException e) {
-			System.out.println("could not get presentationuri from frink"+response);
+			log.debug("could not get presentationuri from frink"+response);
 		}
 		
 		String screenshot = "http://images1.noterik.com" + itemUri + "/raw.png";
@@ -399,7 +402,7 @@ public class ClusterIngester {
 		try {
 			nss = URLEncoder.encode(filename, "UTF-8");
 		} catch (UnsupportedEncodingException e) {
-			System.out.println("could not urlencode: " + filename);
+			log.debug("could not urlencode: " + filename);
 		}
 		frinkUrl += "?nid=" + nid + "&nss=" + nss;
 		String response = sendFrinkRequest(frinkUrl);
@@ -410,13 +413,13 @@ public class ClusterIngester {
 		if(response==null) return null;
 		String itemUri = "";
 		
-		System.out.println("response = "+response);
+		log.debug("response = "+response);
 		
 		try {
 			Document doc = DocumentHelper.parseText(response);
 			List<Node> urns = doc.selectNodes("//urn");
 			if(urns.isEmpty()) {
-				System.out.println("Frink collection does not exist: " + frinkUrl);
+				log.debug("Frink collection does not exist: " + frinkUrl);
 				return null;
 			}
 			for (Iterator<Node> cIter = urns.iterator(); cIter.hasNext();) {
@@ -428,11 +431,11 @@ public class ClusterIngester {
 				}
 			}
 			if(itemUri.equals("")) {
-				System.out.println("Incomplete FRINK data: " + frinkUrl);
+				log.debug("Incomplete FRINK data: " + frinkUrl);
 				return null;
 			}
 		} catch (DocumentException e) {
-			System.out.println("could not get presentationuri from frink"+response);
+			log.debug("could not get presentationuri from frink"+response);
 		}
 		
 		String screenshot = null, customscreenshot = null;
@@ -477,14 +480,14 @@ public class ClusterIngester {
 			 
 			Element presentationVideo = (Element) doc.selectSingleNode("//video");
 			if(presentationVideo==null) {
-				System.out.println("Error getting video");
+				log.debug("Error getting video");
 				return null; // node not found
 			}
 			
 			
 			String videoUri = presentationVideo.attributeValue("referid");
 			if(videoUri==null) return null;
-			System.out.println("Video uri: " + videoUri);
+			log.debug("Video uri: " + videoUri);
 			response = sendBartRequest(videoUri, 1);
 			
 			if(response==null) return null;

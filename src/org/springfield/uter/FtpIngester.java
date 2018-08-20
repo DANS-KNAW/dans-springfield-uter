@@ -32,6 +32,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPFile;
 import org.apache.commons.net.ftp.FTPListParseEngine;
+import org.apache.log4j.Logger;
 import org.springfield.uter.fs.*;
 import org.springfield.uter.homer.*;
 
@@ -39,9 +40,10 @@ import com.noterik.springfield.tools.HttpHelper;
 import com.noterik.springfield.tools.ftp.FtpHelper;
 
 public class FtpIngester extends Thread {
+  private static final Logger log = Logger.getLogger(FtpIngester.class);
 	
 	public static void checkProviderVideo(String provider) {
-		System.out.println("UTER: FTPIngester:  check provider "+provider);
+		log.debug("FTPIngester:  check provider "+provider);
 		String uri = "/domain/euscreenxl/user/"+provider+"/video";
 		String seriesuri = "/domain/euscreenxl/user/"+provider+"/series";
 		ArrayList<String> videodir = null;
@@ -63,7 +65,7 @@ public class FtpIngester extends Thread {
 		
 		// allways 'loads' the full result;
 		FSList fslist = FSListManager.get(uri);
-		System.out.println("UTER: FTPIngester: ingest list size = "+fslist.size());
+		log.debug("FTPIngester: ingest list size = "+fslist.size());
 		
 		// now we can query the resultset;
 		List<FsNode> nodes = fslist.getNodes();
@@ -72,7 +74,7 @@ public class FtpIngester extends Thread {
 			FsNode n = (FsNode)iter.next();	
 			String path = n.getPath();
 			path = path.replace("/video/video","/video"); // bug in FsNode in lou needs fixing
-			System.out.println("UTER: FTPIngester: get video node = "+path);
+			log.debug("FTPIngester: get video node = "+path);
 			FsNode vnode = Fs.getNode(path);
 			String filename = vnode.getProperty("filename"); // bug props should already be in the n node.
 			if(filename==null) {
@@ -89,20 +91,20 @@ public class FtpIngester extends Thread {
 				continue;
 			}
 			
-			System.out.println("UTER: FTPIngester: check for filename = "+filename);
+			log.debug("FTPIngester: check for filename = "+filename);
 			// ok for each of these is there also a raw node one already ?
 			FsNode rawvideonode = Fs.getNode(path+"/rawvideo/1");
-			System.out.println("UTER: FTPIngester: check FS: "+path+"/rawvideo/1");
+			log.debug("FTPIngester: check FS: "+path+"/rawvideo/1");
 			if (rawvideonode==null) {
 				// we don't have a raw node
-				//System.out.println("PROVIDER="+provider+" RAWNODE="+rawvideonode+" FILENAME="+filename);
+				//log.debug("PROVIDER="+provider+" RAWNODE="+rawvideonode+" FILENAME="+filename);
 				// do we have this in our ftp list ?
 				if (videodir==null) videodir = getFtpList(provider,"videos");
 				if (videodir!=null) {
 					if (videodir.contains(filename)) {
-						//System.out.println("WHOO WE HAVE THE FILE ON DISK");
+						//log.debug("WHOO WE HAVE THE FILE ON DISK");
 						if (getFileToTemp(provider,"videos",filename)) {
-							System.out.println("UTER: GOT LOCAL COPY = "+filename+" TO "+vnode.getId());
+							log.debug("GOT LOCAL COPY = "+filename+" TO "+vnode.getId());
 							getFileToStream(provider,"video",vnode.getId(),filename);
 							
 							// create the rawentry
@@ -116,33 +118,33 @@ public class FtpIngester extends Thread {
 							newbody+="<status>done</status>\n";
 					    	newbody+="</properties></fsxml>";
 					    	
-					    	System.out.println("UTER: NEWBODY="+newbody);
+					    	log.debug("NEWBODY="+newbody);
 							String result = LazyHomer.sendRequest("PUT","/domain/euscreenxl/user/"+provider+"/video/"+vnode.getId()+"/rawvideo/1/properties",newbody,"text/xml");
-							System.out.println("UTER: RESULTD="+result);
+							log.debug("RESULTD="+result);
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/video/"+vnode.getId()+"/properties/hasRaws", "true", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/video/"+vnode.getId()+"/properties/datasource", "euscreenxl", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/video/"+vnode.getId()+"/properties/ingestreport", "done", "text/xml");
 						} else {
-							System.out.println("UTER: FTP FAIL="+filename);
+							log.debug("FTP FAIL="+filename);
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/video/"+vnode.getId()+"/properties/ingestreport", "FTP download fail.", "text/xml");
 						}
 					} else {
 						// file is not on the ftp server
-						System.out.println("UTER: FILE NOT ON FTP SERVER ID="+vnode.getId()+" FILENAME="+filename);
+						log.debug("FILE NOT ON FTP SERVER ID="+vnode.getId()+" FILENAME="+filename);
 						Boolean res = ClusterIngester.checkOldCluster(provider, "video", vnode);
 						if(!res) {
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/video/"+vnode.getId()+"/properties/ingestreport", "file not found on ftp", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/video/"+vnode.getId()+"/properties/hasRaws", "false", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/video/"+vnode.getId()+"/properties/datasource", "euscreenxl", "text/xml");
 						} else {
-							System.out.println("UTER: FILE INGESTED FROM OLD CLUSTER! ID="+vnode.getId()+" FILENAME="+filename);
+							log.debug("FILE INGESTED FROM OLD CLUSTER! ID="+vnode.getId()+" FILENAME="+filename);
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/video/"+vnode.getId()+"/properties/hasRaws", "true", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/video/"+vnode.getId()+"/properties/datasource", "euscreen", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/video/"+vnode.getId()+"/properties/ingestreport", "done", "text/xml");
 						}
 					}
 				} else {
-					System.out.println("UTER: FTPIngester: videodir is EMPTY!");
+					log.debug("FTPIngester: videodir is EMPTY!");
 				}
 				
 			} else {
@@ -183,8 +185,8 @@ public class FtpIngester extends Thread {
 						}
 					}
 				}
-				System.out.println("UTER: ALREADY GOT ID = "+vnode.getId());
-				System.out.println("UTER: MOUNT = "+mount);
+				log.debug("ALREADY GOT ID = "+vnode.getId());
+				log.debug("MOUNT = "+mount);
 				if(screenshot!=null) {
 					if(!screenshot.contains("/edna")) {
 						screenshot = screenshot.replace("noterik.com", "noterik.com/edna");
@@ -199,7 +201,7 @@ public class FtpIngester extends Thread {
 			//Handle series
 			String seriesTitle = vnode.getProperty("TitleSet_TitleSetInOriginalLanguage_seriesOrCollectionTitle");
 			if(seriesTitle!=null) {
-				System.out.println("UTER:" + vnode.getId() + " is episode of series: " + seriesTitle);
+				log.debug("UTER:" + vnode.getId() + " is episode of series: " + seriesTitle);
 				if(seriesMap.containsValue(seriesTitle)) {
 					for(Iterator<FsNode> siter = series.iterator() ; siter.hasNext(); ) {
 						FsNode s = (FsNode)siter.next();	
@@ -210,12 +212,12 @@ public class FtpIngester extends Thread {
 						String sTitle =  snode.getProperty("TitleSet_TitleSetInOriginalLanguage_seriesOrCollectionTitle");
 						if(sTitle==null) continue;
 						if(sTitle.equals(seriesTitle)) {
-							System.out.println("UTER:" + vnode.getId() + " series found: " + seriesTitle);
+							log.debug("UTER:" + vnode.getId() + " series found: " + seriesTitle);
 							String body = "<fsxml><attributes>";
 							body += "<referid>/domain/euscreenxl/user/"+provider+"/video/"+vnode.getId()+"</referid>";
 							body += "</attributes></fsxml>";
 							String response = LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/series/"+snode.getId()+"/video/"+vnode.getId()+"/attributes", body, "text/xml");
-							System.out.println("UTER: Episode created: " + vnode.getId());
+							log.debug("Episode created: " + vnode.getId());
 						}
 					}
 				}
@@ -224,12 +226,12 @@ public class FtpIngester extends Thread {
 	}
 	
 	public static void checkProviderDoc(String provider) {
-		System.out.println("UTER: FTPIngester:  check provider doc "+provider);
+		log.debug("FTPIngester:  check provider doc "+provider);
 		String uri = "/domain/euscreenxl/user/"+provider+"/doc";
 		ArrayList<String> docdir = null;
 		// allways 'loads' the full result;
 		FSList fslist = FSListManager.get(uri);
-		System.out.println("UTER: FTPIngester: ingest list size = "+fslist.size());
+		log.debug("FTPIngester: ingest list size = "+fslist.size());
 		
 		// now we can query the resultset;
 		List<FsNode> nodes = fslist.getNodes();
@@ -245,19 +247,19 @@ public class FtpIngester extends Thread {
 				continue;
 			}
 			
-			System.out.println("UTER: FTPIngester: check for filename = "+filename);
+			log.debug("FTPIngester: check for filename = "+filename);
 			FsNode rawdocnode = Fs.getNode(path+"/rawdoc/1");
-			System.out.println("UTER: FTPIngester: check FS: "+path+"/rawdoc/1");
+			log.debug("FTPIngester: check FS: "+path+"/rawdoc/1");
 			if (rawdocnode==null) {
 				// we don't have a raw node
-				//System.out.println("PROVIDER="+provider+" RAWNODE="+rawvideonode+" FILENAME="+filename);
+				//log.debug("PROVIDER="+provider+" RAWNODE="+rawvideonode+" FILENAME="+filename);
 				// do we have this in our ftp list ?
 				if (docdir==null) docdir = getFtpList(provider,"docs");
 				if (docdir!=null) {
 					if (docdir.contains(filename)) {
-						//System.out.println("WHOO WE HAVE THE FILE ON DISK");
+						//log.debug("WHOO WE HAVE THE FILE ON DISK");
 						if (getFileToTemp(provider,"docs",filename)) {
-							System.out.println("UTER: GOT LOCAL COPY = "+filename+" TO "+pnode.getId());
+							log.debug("GOT LOCAL COPY = "+filename+" TO "+pnode.getId());
 							getFileToDataStream(provider,"doc",pnode.getId(),filename);
 							String ext = FilenameUtils.getExtension(filename);
 							// create the rawentry
@@ -270,36 +272,36 @@ public class FtpIngester extends Thread {
 							newbody+="<original>true</original>\n";
 							newbody+="</properties></fsxml>";
 							
-							System.out.println("UTER: NEWBODY="+newbody);
+							log.debug("NEWBODY="+newbody);
 							String result = LazyHomer.sendRequest("PUT","/domain/euscreenxl/user/"+provider+"/doc/"+pnode.getId()+"/rawdoc/1/properties",newbody,"text/xml");
-							System.out.println("UTER: RESULTD="+result);
+							log.debug("RESULTD="+result);
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/doc/"+pnode.getId()+"/properties/hasRaws", "true", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/doc/"+pnode.getId()+"/properties/datasource", "euscreenxl", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/doc/"+pnode.getId()+"/properties/ingestreport", "done", "text/xml");
 						} else {
-							System.out.println("UTER: FTP FAIL="+filename);
+							log.debug("FTP FAIL="+filename);
 						}
 					} else {
 						// file is not on the ftp server
-						System.out.println("UTER: FILE NOT ON FTP SERVER ID="+pnode.getId()+" FILENAME="+filename);
+						log.debug("FILE NOT ON FTP SERVER ID="+pnode.getId()+" FILENAME="+filename);
 						Boolean res = ClusterIngester.checkOldCluster(provider, "pdf", pnode);
 						if(!res) {
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/doc/"+pnode.getId()+"/properties/ingestreport", "file not found on ftp", "text/xml");
 						} else {
-							System.out.println("UTER: FILE INGESTED FROM OLD CLUSTER! ID="+pnode.getId()+" FILENAME="+filename);
+							log.debug("FILE INGESTED FROM OLD CLUSTER! ID="+pnode.getId()+" FILENAME="+filename);
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/doc/"+pnode.getId()+"/properties/hasRaws", "true", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/doc/"+pnode.getId()+"/properties/datasource", "euscreen", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/doc/"+pnode.getId()+"/properties/ingestreport", "done", "text/xml");
 						}
 					}
 				} else {
-					System.out.println("UTER: FTPIngester: docdir is EMPTY!");
+					log.debug("FTPIngester: docdir is EMPTY!");
 				}
 				
 			} else {
-				System.out.println("UTER: ALREADY GOT ID = "+pnode.getId());
+				log.debug("ALREADY GOT ID = "+pnode.getId());
 				String mount = rawdocnode.getProperty("mount");
-				System.out.println("UTER: MOUNT = "+mount);
+				log.debug("MOUNT = "+mount);
 				String datasource = "euscreenxl";
 				if(mount!=null) {
 					if(mount.contains("http://images1")) {
@@ -318,12 +320,12 @@ public class FtpIngester extends Thread {
 	}
 	
 	public static void checkProviderPicture(String provider) {
-		System.out.println("UTER: FTPIngester:  check provider picture "+provider);
+		log.debug("FTPIngester:  check provider picture "+provider);
 		String uri = "/domain/euscreenxl/user/"+provider+"/picture";
 		ArrayList<String> picturedir = null;
 		// allways 'loads' the full result;
 		FSList fslist = FSListManager.get(uri);
-		System.out.println("UTER: FTPIngester: ingest list size = "+fslist.size());
+		log.debug("FTPIngester: ingest list size = "+fslist.size());
 		
 		// now we can query the resultset;
 		List<FsNode> nodes = fslist.getNodes();
@@ -339,19 +341,19 @@ public class FtpIngester extends Thread {
 				continue;
 			}
 			
-			System.out.println("UTER: FTPIngester: check for filename = "+filename);
+			log.debug("FTPIngester: check for filename = "+filename);
 			FsNode rawpicturenode = Fs.getNode(path+"/rawpicture/1");
-			System.out.println("UTER: FTPIngester: check FS: "+path+"/rawpicture/1");
+			log.debug("FTPIngester: check FS: "+path+"/rawpicture/1");
 			if (rawpicturenode==null) {
 				// we don't have a raw node
-				//System.out.println("PROVIDER="+provider+" RAWNODE="+rawvideonode+" FILENAME="+filename);
+				//log.debug("PROVIDER="+provider+" RAWNODE="+rawvideonode+" FILENAME="+filename);
 				// do we have this in our ftp list ?
 				if (picturedir==null) picturedir = getFtpList(provider,"pictures");
 				if (picturedir!=null) {
 					if (picturedir.contains(filename)) {
-						//System.out.println("WHOO WE HAVE THE FILE ON DISK");
+						//log.debug("WHOO WE HAVE THE FILE ON DISK");
 						if (getFileToTemp(provider,"pictures",filename)) {
-							System.out.println("UTER: GOT LOCAL COPY = "+filename+" TO "+pnode.getId());
+							log.debug("GOT LOCAL COPY = "+filename+" TO "+pnode.getId());
 							getFileToPictureStream(provider,"picture",pnode.getId(),filename);
 							String ext = FilenameUtils.getExtension(filename);
 							// create the rawentry
@@ -364,37 +366,37 @@ public class FtpIngester extends Thread {
 							newbody+="<original>true</original>\n";
 							newbody+="</properties></fsxml>";
 							
-							System.out.println("UTER: NEWBODY="+newbody);
+							log.debug("NEWBODY="+newbody);
 							String result = LazyHomer.sendRequest("PUT","/domain/euscreenxl/user/"+provider+"/picture/"+pnode.getId()+"/rawpicture/1/properties",newbody,"text/xml");
-							System.out.println("UTER: RESULTD="+result);
+							log.debug("RESULTD="+result);
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/picture/"+pnode.getId()+"/properties/hasRaws", "true", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/picture/"+pnode.getId()+"/properties/datasource", "euscreenxl", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/picture/"+pnode.getId()+"/properties/ingestreport", "done", "text/xml");
 						} else {
-							System.out.println("UTER: FTP FAIL="+filename);
+							log.debug("FTP FAIL="+filename);
 						}
 					} else {
 						// file is not on the ftp server
-						System.out.println("UTER: FILE NOT ON FTP SERVER ID="+pnode.getId()+" FILENAME="+filename);
+						log.debug("FILE NOT ON FTP SERVER ID="+pnode.getId()+" FILENAME="+filename);
 						Boolean res = ClusterIngester.checkOldCluster(provider, "picture", pnode);
 						if(!res) {
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/picture/"+pnode.getId()+"/properties/ingestreport", "file not found on ftp", "text/xml");
 						} else {
-							System.out.println("UTER: FILE INGESTED FROM OLD CLUSTER! ID="+pnode.getId()+" FILENAME="+filename);
+							log.debug("FILE INGESTED FROM OLD CLUSTER! ID="+pnode.getId()+" FILENAME="+filename);
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/picture/"+pnode.getId()+"/properties/hasRaws", "true", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/picture/"+pnode.getId()+"/properties/datasource", "euscreen", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/picture/"+pnode.getId()+"/properties/ingestreport", "done", "text/xml");
 						}
 					}
 				} else {
-					System.out.println("UTER: FTPIngester: picturedir is EMPTY!");
+					log.debug("FTPIngester: picturedir is EMPTY!");
 				}
 				
 			} else {
 				
-				System.out.println("UTER: ALREADY GOT ID = "+pnode.getId());
+				log.debug("ALREADY GOT ID = "+pnode.getId());
 				String mount = rawpicturenode.getProperty("mount");
-				System.out.println("UTER: MOUNT = "+mount);
+				log.debug("MOUNT = "+mount);
 				String datasource = "euscreenxl";
 				if(mount!=null) {
 					if(mount.contains("http://images1")) {
@@ -430,12 +432,12 @@ public class FtpIngester extends Thread {
 	}
 	
 	public static void checkProviderAudio(String provider) {
-		System.out.println("UTER: FTPIngester:  check provider audio "+provider);
+		log.debug("FTPIngester:  check provider audio "+provider);
 		String uri = "/domain/euscreenxl/user/"+provider+"/audio";
 		ArrayList<String> audiodir = null;
 		// allways 'loads' the full result;
 		FSList fslist = FSListManager.get(uri);
-		System.out.println("UTER: FTPIngester: ingest list size = "+fslist.size());
+		log.debug("FTPIngester: ingest list size = "+fslist.size());
 		
 		// now we can query the resultset;
 		List<FsNode> nodes = fslist.getNodes();
@@ -458,19 +460,19 @@ public class FtpIngester extends Thread {
 				continue;
 			}
 		
-			System.out.println("FTPIngester: check for filename = "+filename);
+			log.debug("FTPIngester: check for filename = "+filename);
 			FsNode rawaudionode = Fs.getNode(path+"/rawaudio/1");
-			System.out.println("FTPIngester: check FS: "+path+"/rawaudio/1");
+			log.debug("FTPIngester: check FS: "+path+"/rawaudio/1");
 			if (rawaudionode==null) {
 				// we don't have a raw node
-				//System.out.println("PROVIDER="+provider+" RAWNODE="+rawvideonode+" FILENAME="+filename);
+				//log.debug("PROVIDER="+provider+" RAWNODE="+rawvideonode+" FILENAME="+filename);
 				// do we have this in our ftp list ?
 				if (audiodir==null) audiodir = getFtpList(provider,"sounds");
 				if (audiodir!=null) {
 					if (audiodir.contains(filename)) {
-						//System.out.println("WHOO WE HAVE THE FILE ON DISK");
+						//log.debug("WHOO WE HAVE THE FILE ON DISK");
 						if (getFileToTemp(provider,"sounds",filename)) {
-							System.out.println("GOT LOCAL COPY = "+filename+" TO "+vnode.getId());
+							log.debug("GOT LOCAL COPY = "+filename+" TO "+vnode.getId());
 							getFileToAudioStream(provider,"audio",vnode.getId(),filename);
 							String ext = FilenameUtils.getExtension(filename);
 							// create the rawentry
@@ -483,36 +485,36 @@ public class FtpIngester extends Thread {
 							newbody+="<original>true</original>\n";
 					    	newbody+="</properties></fsxml>";
 					    	
-					    	System.out.println("NEWBODY="+newbody);
+					    	log.debug("NEWBODY="+newbody);
 							String result = LazyHomer.sendRequest("PUT","/domain/euscreenxl/user/"+provider+"/audio/"+vnode.getId()+"/rawaudio/1/properties",newbody,"text/xml");
-							System.out.println("RESULTD="+result);
+							log.debug("RESULTD="+result);
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/audio/"+vnode.getId()+"/properties/hasRaws", "true", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/audio/"+vnode.getId()+"/properties/datasource", "euscreenxl", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/audio/"+vnode.getId()+"/properties/ingestreport", "done", "text/xml");
 						} else {
-							System.out.println("FTP FAIL="+filename);
+							log.debug("FTP FAIL="+filename);
 						}
 					} else {
 						// file is not on the ftp server
-						System.out.println("FILE NOT ON FTP SERVER ID="+vnode.getId()+" FILENAME="+filename);						
+						log.debug("FILE NOT ON FTP SERVER ID="+vnode.getId()+" FILENAME="+filename);
 						Boolean res = ClusterIngester.checkOldCluster(provider, "audio", vnode);
 						if(!res) {
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/audio/"+vnode.getId()+"/properties/ingestreport", "file not found on ftp", "text/xml");
 						} else {
-							System.out.println("FILE INGESTED FROM OLD CLUSTER! ID="+vnode.getId()+" FILENAME="+filename);	
+							log.debug("FILE INGESTED FROM OLD CLUSTER! ID="+vnode.getId()+" FILENAME="+filename);
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/audio/"+vnode.getId()+"/properties/hasRaws", "true", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/audio/"+vnode.getId()+"/properties/datasource", "euscreen", "text/xml");
 							LazyHomer.sendRequest("PUT", "/domain/euscreenxl/user/"+provider+"/audio/"+vnode.getId()+"/properties/ingestreport", "done", "text/xml");
 						}
 					}
 				} else {
-					System.out.println("FTPIngester: audiodir is EMPTY!");
+					log.debug("FTPIngester: audiodir is EMPTY!");
 				}
 				
 			} else {
-				System.out.println("ALREADY GOT ID = "+vnode.getId());
+				log.debug("ALREADY GOT ID = "+vnode.getId());
 				String mount = rawaudionode.getProperty("mount");
-				System.out.println("MOUNT = "+mount);
+				log.debug("MOUNT = "+mount);
 				String datasource = "euscreenxl";
 				if(mount!=null) {
 					if(mount.contains("http://images1")) {
@@ -616,7 +618,7 @@ public class FtpIngester extends Thread {
 			client.connect("ftp.noterik.com");
 			boolean loggedin = client.login("euscreenfetcher","euscreenfetcher");
 			if (!loggedin) { 
-				System.out.println("FtpIngester: can not login ftp "); 
+				log.debug("FtpIngester: can not login ftp ");
 				return null;
 			}
 			client.enterLocalPassiveMode();
@@ -632,7 +634,7 @@ public class FtpIngester extends Thread {
 					if(!file.isDirectory()) {
 						String filename = file.getName();
 						results.add(filename);
-						//System.out.println("FILENAME="+filename);
+						//log.debug("FILENAME="+filename);
 					}
 				}
 			}

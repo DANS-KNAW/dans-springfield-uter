@@ -21,6 +21,8 @@
 
 package org.springfield.uter.fs;
 
+import org.apache.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 
 public class FSList {
+	private static final Logger log = Logger.getLogger(FSList.class);
+
 	private String path;
 	private String id;
 	private List<FsNode> nodes;
@@ -89,10 +93,10 @@ public class FSList {
 		List<FsNode> result = new ArrayList<FsNode>();
 		for(Iterator<FsNode> iter = nodes.iterator() ; iter.hasNext(); ) {
 			FsNode n = (FsNode)iter.next();	
-			System.out.println("UTER: NAME="+name);
+			log.debug("NAME="+name);
 			if (n.getName().equals(name)) {
 				String field = n.getProperty(searchlabel);
-				System.out.println("UTER: F="+field+" K="+searchkey);
+				log.debug("F="+field+" K="+searchkey);
 				if (field.indexOf(searchkey)!=-1) {
 					result.add(n);
 				}

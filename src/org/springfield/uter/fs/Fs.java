@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -35,6 +36,7 @@ import org.springfield.uter.homer.*;
 import com.noterik.springfield.tools.HttpHelper;
 
 public class Fs {
+	private static final Logger log = Logger.getLogger(Fs.class);
 	
 	private static String[] ignorelist = {"rawvideo","screens"};
 
@@ -99,7 +101,7 @@ public class Fs {
 			nodes = LazyHomer.sendRequestBart("GET",path,xml,"text/xml");
 		} else {
 			nodes = HttpHelper.sendRequest("GET", path, "text/xml", "text/xml");
-			//System.out.println("FEEDBACK="+nodes);
+			//log.debug("FEEDBACK="+nodes);
 			path = path.substring(path.indexOf("/domain/"));
 		}
  		try { 
@@ -116,7 +118,7 @@ public class Fs {
 					}
 				}
 			} else {
-				System.out.println("UTER: IS SUBNODE");
+				log.debug("IS SUBNODE");
 				for(Iterator<Node> iter = doc.getRootElement().nodeIterator(); iter.hasNext(); ) {
 					Element node = (Element)iter.next();
 					for(Iterator<Node> iter2 = node.nodeIterator(); iter2.hasNext(); ) {

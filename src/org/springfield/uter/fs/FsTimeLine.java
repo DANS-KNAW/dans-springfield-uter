@@ -23,9 +23,11 @@ package org.springfield.uter.fs;
 
 import java.util.*;
 
+import org.apache.log4j.Logger;
 import org.springfield.uter.homer.*;
 
 public class FsTimeLine implements MargeObserver {
+	private static final Logger log = Logger.getLogger(FsTimeLine.class);
 	
 	private ArrayList<String> observing = new ArrayList<String>();
 	private Map<String, ArrayList<FsNode>> types = new HashMap<String, ArrayList<FsNode>>();
@@ -59,9 +61,9 @@ public class FsTimeLine implements MargeObserver {
 			Collections.sort(list);
 		}
 		
-		System.out.println("UTER: -----------------------------");
-		System.out.println("UTER: LISTEN TO: " + path);
-		System.out.println("UTER: -----------------------------");
+		log.debug("-----------------------------");
+		log.debug("LISTEN TO: " + path);
+		log.debug("-----------------------------");
 		if(!observing.contains(path + "/")){
 			LazyMarge.addObserver(path + "/*", this);
 		}
@@ -182,6 +184,6 @@ public class FsTimeLine implements MargeObserver {
 			updateObservers("PUT", type, id);
 		}
 		
-		System.out.println("UTER: FsTimeLine.remoteSignal(from: " + from + ", method: " + method + ", url: " + url);
+		log.debug("FsTimeLine.remoteSignal(from: " + from + ", method: " + method + ", url: " + url);
 	}
 }

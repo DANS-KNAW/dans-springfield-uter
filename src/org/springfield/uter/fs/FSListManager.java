@@ -87,7 +87,7 @@ public class FSListManager {
 						Element node2 = (Element)iter2.next();
 						FsNode nn = new FsNode();
 						if (!node2.getName().equals("properties")) {
-							//System.out.println("NAME2="+node2.getName());
+							//log.debug("NAME2="+node2.getName());
 							nn.setName(node2.getName());
 							nn.setId(node2.attribute("id").getText());
 							nn.setPath(path+"/"+nn.getName()+"/"+nn.getId());

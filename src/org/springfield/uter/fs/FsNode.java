@@ -23,9 +23,11 @@ package org.springfield.uter.fs;
 
 import java.util.*;
 
+import org.apache.log4j.Logger;
 import org.springfield.uter.homer.LazyHomer;
 
 public class FsNode implements Comparable<FsNode>  {
+	private static final Logger log = Logger.getLogger(FsNode.class);
 	
 	private String name;
 	private String id;
@@ -62,7 +64,7 @@ public class FsNode implements Comparable<FsNode>  {
 	}
 	
     public void setReferid(String i) {
-    	System.out.println("UTER: SET REFERID="+i);
+    	log.debug("SET REFERID="+i);
         referid = i;
     }
 

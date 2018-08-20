@@ -35,6 +35,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
@@ -46,6 +47,7 @@ import org.springfield.uter.homer.LazyHomer;
 import com.noterik.springfield.tools.HttpHelper;
 
 public class NTUACheckupThread extends Thread {
+	private static final Logger log = Logger.getLogger(NTUACheckupThread.class);
 	private static boolean running = false;
 
 	private static String mintURI = "http://mint-projects.image.ntua.gr/euscreenxl/PortalService";
@@ -54,7 +56,7 @@ public class NTUACheckupThread extends Thread {
 	private static int LOOP_SLEEP = 12*60*60*1000; //12 hours for every successive run 
 	
 	public NTUACheckupThread() {
-		System.out.println("STARTING NTUA CHECKUP THREAD");
+		log.debug("STARTING NTUA CHECKUP THREAD");
 		if (!running) {
 			running = true;
 			start();
@@ -66,7 +68,7 @@ public class NTUACheckupThread extends Thread {
 			//Thread.sleep(INIT_SLEEP);
 			while (running) {
 				try {
-					System.out.println("Uter NTUAcheck: running");
+					log.debug("Uter NTUAcheck: running");
 					
 					ArrayList<String> ntuaList = new ArrayList<String>();
 					ArrayList<String> ntkList = new ArrayList<String>();
@@ -83,7 +85,7 @@ public class NTUACheckupThread extends Thread {
 			        	}
 			        	in.close();
 			        } catch(Exception e) {
-			        	System.out.println("NTUAcheck error");
+			        	log.debug("NTUAcheck error");
 			        	e.printStackTrace();
 			        }
 			        
@@ -97,7 +99,7 @@ public class NTUACheckupThread extends Thread {
 						try {
 							doc = DocumentHelper.parseText(response);
 						} catch(DocumentException e) {
-							System.out.println("Springfield check response exception: " + e);
+							log.debug("Springfield check response exception: " + e);
 						}
 						
 						List<Node> nodes = doc.selectNodes("//item");
@@ -115,20 +117,20 @@ public class NTUACheckupThread extends Thread {
 			        for (String id : ntuaList) {
 			        	if(!ntkList.contains(id)) {
 			        		if(id.equals("EUS_00000000000000000000000000000000")) continue;
-			        		System.out.println("Missing id: " + id);
+			        		log.debug("Missing id: " + id);
 			        	}
 			        }
 			        
 					Thread.sleep(LOOP_SLEEP);
 				} catch(Exception e) {
-					System.out.println("Uter NTUAcheck: error loop 1: ");
+					log.debug("Uter NTUAcheck: error loop 1: ");
 					e.printStackTrace();
 				}
 			}
 			
-			System.out.println("Uter NTUAcheck: stopping");	
+			log.debug("Uter NTUAcheck: stopping");
 		} catch(Exception e2) {
-			System.out.println("Uter NTUAcheck: error loop 2");	
+			log.debug("Uter NTUAcheck: error loop 2");
 		}
 	}
 	

@@ -44,6 +44,7 @@ import java.util.Map;
 
 import org.apache.commons.io.FileExistsException;
 import org.apache.commons.io.FileUtils;
+import org.apache.log4j.Logger;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
@@ -55,6 +56,7 @@ import org.springfield.uter.homer.LazyHomer;
 import com.noterik.springfield.tools.HttpHelper;
 
 public class FixProvidersThread extends Thread {
+	private static final Logger log = Logger.getLogger(FixProvidersThread.class);
 	private static boolean running = false;
 
 	private static String xmlURI = "http://c6.noterik.com/domain/euscreen/";
@@ -91,7 +93,7 @@ public class FixProvidersThread extends Thread {
 	}
 	
 	public FixProvidersThread() {
-		System.out.println("STARTING FixProviders THREAD");
+		log.debug("STARTING FixProviders THREAD");
 		String realPath = XMLPath + "xml/";
 		generateIndexFile(realPath);
 		if (!running) {
@@ -112,7 +114,7 @@ public class FixProvidersThread extends Thread {
 		        	String line;
 		        	while ((line = in.readLine()) != null) {
 			    		String eus_id = line + ".xml";
-			    		System.out.println("Checking: " + eus_id);
+			    		log.debug("Checking: " + eus_id);
 
 			    		URL xmlUrl = new URL(xmlURI + "xml/" + eus_id);
 			        	BufferedReader inXML = new BufferedReader(new InputStreamReader(xmlUrl.openStream()));
@@ -134,13 +136,13 @@ public class FixProvidersThread extends Thread {
 			    				providerList.add(providerName);
 			    				
 			    			}
-			    			System.out.println(providerName + " / " + eus_id);
+			    			log.debug(providerName + " / " + eus_id);
 			    			moveFile(providerName, eus_id);
 			    			
 			    		}
 		        	}
 		        } catch(Exception e) {
-		        	System.out.println("Fix providers error");
+		        	log.debug("Fix providers error");
 		        	e.printStackTrace();
 		        }
 				
@@ -149,9 +151,9 @@ public class FixProvidersThread extends Thread {
 				stopTask();
 			}
 			
-			System.out.println("Uter FixProviders: stopping");	
+			log.debug("Uter FixProviders: stopping");
 		} catch(Exception e2) {
-			System.out.println("Uter FixProviders: error loop 2");	
+			log.debug("Uter FixProviders: error loop 2");
 		}
 	}
 	
@@ -171,7 +173,7 @@ public class FixProvidersThread extends Thread {
 		
 		File srcFile = new File(XMLPath + "xml/" + filename);
 		File destFile = new File(XMLPath + "user/" + provider + "/" + filename);
-		System.out.println("FixProviders: Moving file: " + srcFile.getAbsolutePath() + " to " + destFile.getAbsolutePath());
+		log.debug("FixProviders: Moving file: " + srcFile.getAbsolutePath() + " to " + destFile.getAbsolutePath());
 		if(destFile.exists()) {
 			srcFile.delete();
 		} else {
@@ -218,7 +220,7 @@ public class FixProvidersThread extends Thread {
 			reportFileC.close();
 		
 		} catch (Exception e) {
-			System.out.println("error creating report file "+e.getMessage());
+			log.debug("error creating report file "+e.getMessage());
 		}
 
 	}
@@ -245,7 +247,7 @@ public class FixProvidersThread extends Thread {
 			indexFileC.close();
 		
 		} catch (Exception e) {
-			System.out.println("error creating index file "+e.getMessage());
+			log.debug("error creating index file "+e.getMessage());
 		}
 
 	}
